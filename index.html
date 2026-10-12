@@ -368,6 +368,7 @@ button.card:disabled { cursor: default; }
   </details>
 </div>
 
+<script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 <script>
 /* Motor del truco argentino (2 jugadores, sin flor). */
 (function (root) {
@@ -646,20 +647,20 @@ button.card:disabled { cursor: default; }
   if (typeof module !== 'undefined' && module.exports) module.exports = root.Truco;
 })(typeof window !== 'undefined' ? window : globalThis);
 
+
 </script>
 <script>
-/* Capa de red del truco 1 contra 1.
- * El anfitrión lleva la partida (motor real). El invitado recibe, en la presencia del
- * anfitrión, una foto completa del estado desde su punto de vista más los eventos del
- * último paso, y manda sus jugadas por su propia presencia. La presencia es estado y no
- * mensajes sueltos, así que una pérdida de datos se arregla sola con la foto siguiente. */
+/* Capa de red del truco 1 contra 1, sobre PeerJS (conexión directa entre navegadores).
+ * El anfitrión lleva la partida (motor real). Cada mensaje que manda al invitado trae una foto
+ * completa del estado desde su punto de vista más los eventos del último paso; el invitado
+ * manda sus jugadas. Si se pierde la continuidad (por ejemplo al reconectar), con la foto
+ * alcanza para ponerse al día. */
 (function (root) {
   'use strict';
 
   var SUIT_CH = { espada: 'e', basto: 'b', oro: 'o', copa: 'c' };
   var CH_SUIT = { e: 'espada', b: 'basto', o: 'oro', c: 'copa' };
   var FLIP = { me: 'cpu', cpu: 'me' };
-  var MAX_BYTES = 3300;
 
   function enc(c) { return c ? c.num + SUIT_CH[c.suit] : 0; }
   function dec(s) { return s ? { num: parseInt(s, 10), suit: CH_SUIT[String(s).slice(-1)] } : null; }
@@ -748,80 +749,135 @@ button.card:disabled { cursor: default; }
   R.startHand = function () { this.send({ type: 'next' }); };
   R.drain = function () { return []; };
 
-  /* Anfitrión */
-  function Host(room, opts) {
-    var self = this;
-    this.k = 0; this.guestPeer = null; this.lastN = 0; this.lastHE = null;
-    function scan() {
-      var peers = room.peers();
-      if (self.guestPeer && !peers.some(function (p) { return p.peer === self.guestPeer; })) {
-        self.guestPeer = null;
-        room.presence({ g: null });
-        opts.onGuest(false);
-      }
-      if (!self.guestPeer) {
-        var cand = peers.filter(function (p) { return !p.isMe && p.presence.role === 'guest'; })[0];
-        if (cand) {
-          self.guestPeer = cand.peer; self.lastN = 0;
-          room.presence({ g: cand.peer });
-          opts.onGuest(true);
-        }
-      }
-      if (self.guestPeer) {
-        var gp = peers.filter(function (p) { return p.peer === self.guestPeer; })[0];
-        var a = gp && gp.presence.a;
-        if (a && a.n > self.lastN) { self.lastN = a.n; opts.onAction(a); }
-      }
-    }
-    this.publish = function (events, g) {
-      events.forEach(function (e) {
-        if (e.type === 'deal') self.lastHE = null;
-        if (e.type === 'handEnd') self.lastHE = { w: fw(e.winner), p: e.pts, r: e.reason };
-      });
-      self.k++;
-      var m = { k: self.k, e: events.map(flipEvent), s: makeSnapshot(g, self.lastHE) };
-      if (JSON.stringify(m).length > MAX_BYTES) m.e = [];
-      return room.presence({ m: m });
-    };
-    this.off = room.onPeers(scan);
-    room.presence({ role: 'host' });
-    scan();
+  /* ---------- Conexión directa (PeerJS) ---------- */
+  var PREFIX = 'truco-ar-';
+  var BEAT_MS = root.__TRUCO_BEAT_MS || 8000, DEAD_MS = root.__TRUCO_DEAD_MS || 60000; // ajustables solo para pruebas
+
+  function available() { return typeof root.Peer === 'function'; }
+
+  // Latido: avisa que seguimos ahí y detecta una conexión muerta que nadie cerró.
+  function Beat(send, onDead) {
+    var last = Date.now(), t = setInterval(function () {
+      if (Date.now() - last > DEAD_MS) { clearInterval(t); onDead(); return; }
+      send({ hb: 1 });
+    }, BEAT_MS);
+    this.touch = function () { last = Date.now(); };
+    this.stop = function () { clearInterval(t); };
   }
 
-  /* Invitado */
-  function Guest(room, opts) {
-    var n = 0, lastK = null, hadHost = false, fullSince = 0, self = this;
-    this.send = function (a) {
-      n++;
-      return room.presence({ a: { n: n, t: a.type, i: a.idx === undefined ? null : a.idx } });
-    };
-    function scan() {
-      var peers = room.peers();
-      var mine = peers.filter(function (p) { return p.isMe && p.sameTab; })[0];
-      var host = peers.filter(function (p) { return !p.isMe && p.presence.role === 'host'; })[0];
-      if (!host) {
-        if (hadHost) { hadHost = false; lastK = null; opts.onHostLeft(); }
-        return;
-      }
-      if (!hadHost) { hadHost = true; opts.onHostFound(); }
-      var gp = host.presence.g;
-      if (gp && mine && gp !== mine.peer) {
-        // El anfitrión todavía puede estar soltando el lugar de un invitado anterior: esperar un poco.
-        if (!fullSince) { fullSince = Date.now(); setTimeout(scan, 4500); }
-        if (Date.now() - fullSince > 4000) opts.onFull();
-        return;
-      }
-      fullSince = 0;
-      var m = host.presence.m;
-      if (gp && mine && gp === mine.peer && m && m.k !== lastK) {
-        var prev = lastK;
-        lastK = m.k;
-        opts.onMessage(m, prev);
-      }
+  /* Anfitrión: abre la sala con el código y espera a un invitado. */
+  function hostRoom(code, cb) {
+    if (!(this instanceof hostRoom)) return new hostRoom(code, cb);
+    var peer = new root.Peer(PREFIX + code, { debug: 0 });
+    var conn = null, beat = null, k = 0, lastHE = null, closed = false, ready = false;
+
+    function send(m) {
+      if (conn && conn.open) { try { conn.send(m); } catch (e) { /* el próximo mensaje trae el estado completo */ } }
     }
-    this.off = room.onPeers(scan);
-    room.presence({ role: 'guest' });
-    scan();
+    function drop(c) {
+      if (conn !== c) return;
+      conn = null;
+      if (beat) { beat.stop(); beat = null; }
+      try { c.close(); } catch (e) { /* ya estaba cerrada */ }
+      if (!closed) cb.onGuest(false);
+    }
+
+    peer.on('open', function () { ready = true; if (!closed) cb.onReady(); });
+    peer.on('error', function (err) { if (!closed) cb.onError((err && err.type) || 'error', ready); });
+    peer.on('disconnected', function () {
+      if (!closed) { try { peer.reconnect(); } catch (e) { /* se vuelve a intentar con el próximo evento */ } }
+    });
+    peer.on('connection', function (c) {
+      if (closed) { try { c.close(); } catch (e) { /* nada */ } return; }
+      // El que entró último gana: así un invitado que recargó reemplaza a su propia conexión vieja.
+      var old = conn;
+      conn = c;
+      if (old) { try { old.close(); } catch (e) { /* nada */ } }
+      if (beat) { beat.stop(); beat = null; }
+      var opened = function () {
+        if (conn !== c) return;
+        beat = new Beat(send, function () { drop(c); });
+        cb.onGuest(true);
+      };
+      if (c.open) opened(); else c.on('open', opened);
+      c.on('data', function (d) {
+        if (conn !== c || !d) return;
+        if (beat) beat.touch();
+        if (d.a && typeof d.a === 'object') cb.onAction(d.a);
+      });
+      c.on('close', function () { drop(c); });
+      c.on('error', function () { drop(c); });
+    });
+
+    this.publish = function (events, g) {
+      events.forEach(function (e) {
+        if (e.type === 'deal') lastHE = null;
+        if (e.type === 'handEnd') lastHE = { w: fw(e.winner), p: e.pts, r: e.reason };
+      });
+      k++;
+      send({ m: { k: k, e: events.map(flipEvent), s: makeSnapshot(g, lastHE) } });
+    };
+    this.close = function () {
+      closed = true;
+      if (beat) { beat.stop(); beat = null; }
+      try { if (conn) conn.close(); } catch (e) { /* nada */ }
+      conn = null;
+      try { peer.destroy(); } catch (e) { /* nada */ }
+    };
+  }
+
+  /* Invitado: se conecta a la sala con el código. */
+  function joinRoom(code, cb) {
+    if (!(this instanceof joinRoom)) return new joinRoom(code, cb);
+    var peer = new root.Peer(undefined, { debug: 0 });
+    var conn = null, beat = null, lastK = null, closed = false, opened = false, gone = false, timer = null;
+
+    function send(m) {
+      if (conn && conn.open) { try { conn.send(m); } catch (e) { /* nada */ } }
+    }
+    function cleanup() { clearTimeout(timer); if (beat) { beat.stop(); beat = null; } }
+    function lost() {
+      if (gone || closed) return;
+      gone = true; cleanup();
+      if (opened) cb.onHostLeft(); else cb.onError('closed', false);
+    }
+
+    peer.on('open', function () {
+      if (closed) return;
+      conn = peer.connect(PREFIX + code, { reliable: true, serialization: 'json' });
+      conn.on('open', function () {
+        if (closed || gone) return;
+        opened = true; clearTimeout(timer);
+        beat = new Beat(send, lost);
+        cb.onHostFound();
+      });
+      conn.on('data', function (d) {
+        if (closed || gone || !d) return;
+        if (beat) beat.touch();
+        if (d.m && typeof d.m === 'object') { var prev = lastK; lastK = d.m.k; cb.onMessage(d.m, prev); }
+      });
+      conn.on('close', lost);
+      conn.on('error', lost);
+    });
+    peer.on('error', function (err) {
+      var type = (err && err.type) || 'error';
+      if (closed || gone) return;
+      if (opened && type !== 'peer-unavailable') return; // ya hay conexión directa: el servicio de salas no importa
+      gone = true; cleanup();
+      cb.onError(type, opened);
+    });
+    timer = setTimeout(function () {
+      if (opened || gone || closed) return;
+      gone = true; cleanup();
+      cb.onError('timeout', false);
+    }, 15000);
+
+    this.send = function (a) { send({ a: { t: a.type, i: a.idx === undefined ? null : a.idx } }); };
+    this.close = function () {
+      closed = true; cleanup();
+      try { if (conn) conn.close(); } catch (e) { /* nada */ }
+      try { peer.destroy(); } catch (e) { /* nada */ }
+    };
   }
 
   function randomCode() {
@@ -832,10 +888,11 @@ button.card:disabled { cursor: default; }
 
   root.TrucoNet = {
     flipEvent: flipEvent, makeSnapshot: makeSnapshot, RemoteGame: RemoteGame,
-    Host: Host, Guest: Guest, randomCode: randomCode, enc: enc, dec: dec
+    hostRoom: hostRoom, joinRoom: joinRoom, available: available, randomCode: randomCode, enc: enc, dec: dec
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.TrucoNet;
 })(typeof window !== 'undefined' ? window : globalThis);
+
 
 </script>
 <script>
@@ -925,6 +982,7 @@ button.card:disabled { cursor: default; }
   if (typeof module !== 'undefined' && module.exports) module.exports = root.TrucoCPU;
 })(typeof window !== 'undefined' ? window : globalThis);
 
+
 </script>
 <script>
 /* Interfaz del truco. Usa Truco (engine.js) y TrucoCPU (cpu.js). */
@@ -939,7 +997,7 @@ button.card:disabled { cursor: default; }
   var NAMES = { me: 'Vos', cpu: 'El rival' };
 
   var g = null, view = null, queue = [], locked = true, vozTimers = {}, gen = 0, running = false;
-  var mode = 'cpu', host = null, guestObj = null, room = null, roomApi = null, roomCode = '';
+  var mode = 'cpu', host = null, guestObj = null, roomCode = '';
   var guestHere = false, hostStarted = false, hostFound = false, hostTarget = 30;
 
   /* ---------- cartas ---------- */
@@ -1117,6 +1175,7 @@ button.card:disabled { cursor: default; }
     switch (e.type) {
       case 'deal':
         view = freshView();
+        renderScore();
         renderRival(); renderCentro(); renderMyHand(null); renderChips();
         aviso('Mano ' + g.handNo + ': arranca ' + (e.mano === 'me' ? '<strong>vos</strong>.' : '<strong>el rival</strong>.'));
         $('acciones').innerHTML = '';
@@ -1387,11 +1446,12 @@ button.card:disabled { cursor: default; }
   function hostOnGuest(joined) {
     guestHere = joined;
     if (joined) {
+      $('conn').textContent = '';
       lobbyConnected('Tu amigo está conectado.');
       if (!hostStarted) { hostStarted = true; startOnlineGame(); }
       else { host.publish([], g); if (!running) afterQueue(); }
     } else {
-      lobbyConnected('Tu amigo se desconectó. La partida sigue esperándolo con el mismo código.');
+      lobbyConnected('Tu amigo se desconectó. Si vuelve a entrar con el mismo código, sigue la partida.');
       if (hostStarted && !running) afterQueue();
     }
   }
@@ -1414,31 +1474,30 @@ button.card:disabled { cursor: default; }
     afterQueue();
   }
 
-  function getRoomApi() {
-    if (roomApi) return Promise.resolve(roomApi);
-    if (!window.claude || !window.claude.use) return Promise.resolve(null);
-    return window.claude.use('room').then(function (r) { roomApi = r; return r; }, function () { return null; });
-  }
-
   function onlineChrome(on) {
     $('target').disabled = on;
     $('nueva').disabled = on;
   }
 
-  function watchConnection(r) {
-    var t = null;
-    r.onConnection(function (c) {
-      clearTimeout(t);
-      if (c) { $('conn').textContent = ''; return; }
-      t = setTimeout(function () { if (room === r) $('conn').textContent = 'Reconectando…'; }, 2000);
-    });
-  }
+  var ERR = {
+    'peer-unavailable': 'No encontramos esa sala. Revisá el código y que tu amigo la tenga abierta.',
+    'closed': 'La sala se cerró antes de que pudieras entrar.',
+    'timeout': 'No pudimos conectarnos (tardó demasiado). Puede ser la red de alguno de los dos; probá de nuevo.',
+    'network': 'No hay conexión con el servicio que une a los jugadores. Probá de nuevo en un rato.',
+    'server-error': 'El servicio que une a los jugadores no responde. Probá de nuevo en un rato.',
+    'socket-error': 'El servicio que une a los jugadores no responde. Probá de nuevo en un rato.',
+    'socket-closed': 'El servicio que une a los jugadores no responde. Probá de nuevo en un rato.',
+    'browser-incompatible': 'Este navegador no puede hacer conexiones directas. Probá con uno más nuevo.',
+    'webrtc': 'Falló la conexión directa entre los dos navegadores. En algunas redes (por ejemplo ciertos datos móviles) puede no funcionar.'
+  };
+  function errMsg(type) { return ERR[type] || 'No se pudo conectar (' + type + ').'; }
+  function noLib() { lobbyMenu('No se pudo cargar la conexión con amigos. Revisá tu internet y recargá la página.'); }
 
   function leaveRoom(msg) {
-    var r = room;
-    try { if (host && host.off) host.off(); if (guestObj && guestObj.off) guestObj.off(); } catch (err) { /* nada */ }
-    room = null; host = null; guestObj = null;
-    if (r) { try { Promise.resolve(r.leave()).catch(function () {}); } catch (err) { /* nada */ } }
+    var h = host, j = guestObj;
+    host = null; guestObj = null;
+    try { if (h) h.close(); } catch (err) { /* nada */ }
+    try { if (j) j.close(); } catch (err) { /* nada */ }
     mode = 'cpu'; guestHere = false; hostStarted = false; hostFound = false;
     onlineChrome(false);
     $('conn').textContent = '';
@@ -1446,51 +1505,79 @@ button.card:disabled { cursor: default; }
     lobbyMenu(msg);
   }
 
-  function createRoom() {
-    getRoomApi().then(function (api) {
-      if (!api) { lobbyMenu('El modo con amigos no está disponible en esta vista. Abrí la página desde claude.ai con tu cuenta.'); return; }
-      var code = N.randomCode();
-      api.join('truco-' + code).then(function (r) {
-        room = r; roomCode = code; mode = 'host'; hostStarted = false; guestHere = false;
-        hostTarget = parseInt($('target').value, 10) || 30;
-        g = new T.Game(hostTarget);
-        onlineChrome(true);
-        clearTable('Esperando a tu amigo…');
-        host = new N.Host(r, { onGuest: hostOnGuest, onAction: hostOnAction });
-        watchConnection(r);
-        lobbyHosting();
-      }, function (err) {
-        lobbyMenu('No pude crear la sala (' + ((err && err.code) || 'error') + '). Probá de nuevo.');
+  function createRoom(tries) {
+    if (host || guestObj) return;
+    if (!N.available()) { noLib(); return; }
+    tries = typeof tries === 'number' ? tries : 0;
+    var code = N.randomCode(), h = null;
+    hostTarget = parseInt($('target').value, 10) || 30;
+    lobbyMenu('Creando la sala…');
+    try {
+      h = new N.hostRoom(code, {
+        onReady: function () {
+          if (host !== h) return;
+          roomCode = code; mode = 'host'; hostStarted = false; guestHere = false;
+          g = new T.Game(hostTarget);
+          onlineChrome(true);
+          clearTable('Esperando a tu amigo…');
+          lobbyHosting();
+        },
+        onError: function (type, wasReady) {
+          if (host !== h) return;
+          if (wasReady) {
+            // La sala ya existe y la conexión directa sigue; solo avisamos si todavía no entró nadie.
+            if (!guestHere) $('conn').textContent = 'El servicio de salas anda intermitente. Si tu amigo no puede entrar, cerrá la sala y creá otra.';
+            return;
+          }
+          host = null;
+          try { h.close(); } catch (err) { /* nada */ }
+          if (type === 'unavailable-id' && tries < 4) { createRoom(tries + 1); return; }
+          lobbyMenu('No pude crear la sala. ' + errMsg(type));
+        },
+        onGuest: hostOnGuest,
+        onAction: hostOnAction
       });
-    });
+    } catch (err) {
+      lobbyMenu('No pude crear la sala. ' + errMsg('browser-incompatible'));
+      return;
+    }
+    host = h;
   }
 
   function joinRoom() {
+    if (host || guestObj) return;
     var code = ($('codigo').value || '').trim().toLowerCase();
     if (!/^[a-z0-9]{5}$/.test(code)) { lobbyMenu('El código tiene 5 letras o números.', code); return; }
-    getRoomApi().then(function (api) {
-      if (!api) { lobbyMenu('El modo con amigos no está disponible en esta vista. Abrí la página desde claude.ai con tu cuenta.'); return; }
-      api.join('truco-' + code).then(function (r) {
-        room = r; roomCode = code; mode = 'guest'; hostFound = false;
-        g = new N.RemoteGame();
-        onlineChrome(true);
-        clearTable('Buscando la sala…');
-        guestObj = new N.Guest(r, {
-          onHostFound: function () { hostFound = true; lobbyConnected('Conectado a la sala ' + code.toUpperCase() + '.'); },
-          onHostLeft: function () { leaveRoom('El anfitrión salió de la sala.'); },
-          onFull: function () { leaveRoom('Esa sala ya tiene dos jugadores.'); },
-          onMessage: guestOnMessage
-        });
-        g.send = function (a) { Promise.resolve(guestObj.send(a)).catch(function () {}); };
-        watchConnection(r);
-        lobbyConnected('Buscando la sala ' + code.toUpperCase() + '…');
-        setTimeout(function () {
-          if (room === r && mode === 'guest' && !hostFound) leaveRoom('No encontramos esa sala. Revisá el código.');
-        }, 7000);
-      }, function (err) {
-        lobbyMenu('No pude entrar a la sala (' + ((err && err.code) || 'error') + ').');
+    if (!N.available()) { noLib(); return; }
+    var j = null;
+    try {
+      j = new N.joinRoom(code, {
+        onHostFound: function () {
+          if (guestObj !== j) return;
+          hostFound = true;
+          lobbyConnected('Conectado a la sala ' + code.toUpperCase() + '.');
+        },
+        onHostLeft: function () {
+          if (guestObj !== j) return;
+          leaveRoom('Se cortó la conexión con el anfitrión (cerró la sala o se cayó la conexión).');
+        },
+        onMessage: function (m, prev) { if (guestObj === j) guestOnMessage(m, prev); },
+        onError: function (type) {
+          if (guestObj !== j) return;
+          leaveRoom(errMsg(type));
+        }
       });
-    });
+    } catch (err) {
+      lobbyMenu(errMsg('browser-incompatible'), code);
+      return;
+    }
+    guestObj = j;
+    roomCode = code; mode = 'guest'; hostFound = false;
+    g = new N.RemoteGame();
+    g.send = function (a) { if (guestObj === j) j.send(a); };
+    onlineChrome(true);
+    clearTable('Conectando con la sala…');
+    lobbyConnected('Buscando la sala ' + code.toUpperCase() + '…');
   }
 
   /* ---------- panel de salas ---------- */
@@ -1504,8 +1591,8 @@ button.card:disabled { cursor: default; }
       '<input id="codigo" type="text" maxlength="5" placeholder="Código" autocomplete="off" autocapitalize="characters" spellcheck="false" value="' + escapeHtml(code || '') + '">' +
       '<button type="button" class="btn" id="joinRoom">Unirme</button></div>' +
       '<p class="lobby-msg" id="lobbyMsg" role="status">' + (msg ? escapeHtml(msg) : '') + '</p>' +
-      '<p class="hint">Tu amigo tiene que abrir esta misma página con su cuenta de Claude. La sala dura mientras las dos pestañas sigan abiertas. Se juega a lo que elijas arriba.</p>';
-    $('mkRoom').addEventListener('click', createRoom);
+      '<p class="hint">Tu amigo abre este mismo link y escribe el código. La sala dura mientras las dos pestañas sigan abiertas, y la conexión es directa entre los dos navegadores. Se juega a lo que elijas arriba.</p>';
+    $('mkRoom').addEventListener('click', function () { createRoom(0); });
     $('joinRoom').addEventListener('click', joinRoom);
     $('codigo').addEventListener('keydown', function (e) { if (e.key === 'Enter') joinRoom(); });
   }
@@ -1543,12 +1630,12 @@ button.card:disabled { cursor: default; }
 
   document.addEventListener('DOMContentLoaded', function () {
     $('nueva').addEventListener('click', newGame);
-    if (window.claude && window.claude.use) $('online').addEventListener('click', toggleLobby);
-    else $('online').hidden = true;
+    $('online').addEventListener('click', toggleLobby);
     $('target').addEventListener('change', newGame);
     newGame();
   });
 })();
+
 
 </script>
 
