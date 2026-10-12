@@ -232,6 +232,46 @@ button.card:disabled { cursor: default; }
 .code { font-family: var(--font-display); font-size: 1.9rem; letter-spacing: 0.22em; background: var(--paper); color: var(--ink); padding: 2px 14px 2px 18px; border-radius: 8px; user-select: all; }
 .code.small { font-size: 1.1rem; letter-spacing: 0.16em; padding: 2px 10px 2px 12px; }
 .btn:disabled, .btn-ghost:disabled, select:disabled { opacity: 0.5; cursor: default; }
+/* 2 contra 2 */
+.modes { display: inline-flex; border: 1px solid var(--chalk-dim); border-radius: 8px; overflow: hidden; }
+.modes button { background: transparent; border: 0; padding: 8px 12px; font-weight: 700; font-size: 0.9rem; color: var(--chalk); }
+.modes button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); }
+.name-in { width: 15ch; background: var(--paper); color: var(--ink); border: 0; border-radius: 8px; padding: 9px 12px; font: 500 0.95rem var(--font-body); }
+.teams { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.team { border: 1px solid rgba(232,240,228,0.2); border-radius: 8px; padding: 6px 10px; }
+.team h4 { margin: 0 0 4px; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--chalk-dim); font-weight: 500; }
+.team ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.team li { display: flex; justify-content: space-between; gap: 8px; font-size: 0.9rem; min-width: 0; }
+.team li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st { font-style: normal; font-size: 0.72rem; border-radius: 99px; padding: 0 8px; border: 1px solid var(--chalk-dim); color: var(--chalk-dim); white-space: nowrap; align-self: center; }
+.st.on { border-color: var(--gold); color: var(--gold); }
+.st.off { border-color: var(--red); color: #f0a79f; }
+.mesa4 { --tw: 54px; --th: 82px; }
+.seats4 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.seat4 { border: 1px solid rgba(232,240,228,0.2); border-radius: 10px; padding: 6px 8px; background: rgba(0,0,0,0.12); min-width: 0; display: flex; flex-direction: column; gap: 3px; align-items: center; text-align: center; }
+.seat4.mate { border-color: rgba(227,168,43,0.55); }
+.seat4.turn { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+.seat-name { font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seat-role { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--chalk-dim); }
+.seat-backs { display: flex; gap: 4px; min-height: 36px; }
+.seat-backs .card.back { width: 24px; height: 36px; border-width: 2px; border-radius: 4px; }
+.seat-backs .card.back::after { inset: 3px; }
+.centro4 { gap: 8px; }
+.baza4 { padding: 6px 3px; }
+.quad { display: grid; grid-template-columns: repeat(2, var(--tw)); gap: 4px; justify-content: center; }
+.baza4 .slot { width: var(--tw); height: var(--th); }
+.baza4 .slot .card { width: var(--tw); height: var(--th); }
+.baza4 .card.tm { outline: 2px solid rgba(227,168,43,0.8); outline-offset: -1px; }
+.baza4 .card.to { outline: 2px solid rgba(169,196,179,0.55); outline-offset: -1px; }
+@media (max-width: 520px) {
+  .mesa4 { --tw: 42px; --th: 64px; }
+  .seat-backs .card.back { width: 20px; height: 30px; }
+  .team li { font-size: 0.82rem; }
+  .teams { gap: 6px; }
+}
+
+#codigo { width: 9.5ch; }
+
 
 </style>
 
@@ -319,7 +359,7 @@ button.card:disabled { cursor: default; }
 
 <div class="app">
   <header class="top">
-    <h1 class="brand">Truco<small>a dos · sin flor</small></h1>
+    <h1 class="brand">Truco<small>1 contra 1 o 2 contra 2 · sin flor</small></h1>
     <div class="tools">
       <label for="target">Se juega a</label>
       <select id="target">
@@ -331,9 +371,15 @@ button.card:disabled { cursor: default; }
     </div>
   </header>
 
-  <section class="score" aria-label="Puntaje">
+  <section class="score" id="score1" aria-label="Puntaje">
     <div class="score-row" id="score-me"><div class="who"><span>Vos</span><em class="tier"></em></div><div class="num">0</div><div class="tally"></div></div>
     <div class="score-row" id="score-cpu"><div class="who"><span>Rival</span><em class="tier"></em></div><div class="num">0</div><div class="tally"></div></div>
+  </section>
+
+
+  <section class="score" id="score4" hidden aria-label="Puntaje">
+    <div class="score-row" id="score4-us"><div class="who"><span>Nosotros</span><em class="tier"></em></div><div class="num">0</div><div class="tally"></div></div>
+    <div class="score-row" id="score4-them"><div class="who"><span>Ellos</span><em class="tier"></em></div><div class="num">0</div><div class="tally"></div></div>
   </section>
 
   <section class="lobby" id="lobby" hidden aria-label="Jugar con un amigo">
@@ -341,7 +387,7 @@ button.card:disabled { cursor: default; }
     <div id="lobbyBody"></div>
   </section>
 
-  <main class="mesa">
+  <main class="mesa" id="mesa1">
     <div class="zone-label">Rival <span id="chips" style="display:contents"></span></div>
     <div class="rival-hand" id="rivalHand" aria-label="Cartas del rival"></div>
     <div class="centro-wrap">
@@ -354,6 +400,20 @@ button.card:disabled { cursor: default; }
     <div class="mi-mano" id="miMano"></div>
   </main>
 
+  <main class="mesa mesa4" id="mesa4" hidden>
+    <div class="zone-label">2 contra 2 <span id="chips4" style="display:contents"></span></div>
+    <div class="seats4" id="seats4"></div>
+    <div class="centro-wrap">
+      <div class="voz cpu" id="vozO4" role="status"></div>
+      <div class="centro centro4" id="centro4"></div>
+      <div class="voz me" id="vozM4" role="status"></div>
+    </div>
+    <div class="aviso" id="aviso4" aria-live="polite">&nbsp;</div>
+    <div class="zone-label">Tus cartas</div>
+    <div class="mi-mano" id="miMano4"></div>
+  </main>
+  <section class="acciones" id="acciones4" hidden aria-label="Acciones"></section>
+
   <section class="acciones" id="acciones" aria-label="Acciones"></section>
 
   <details class="reglas">
@@ -363,6 +423,7 @@ button.card:disabled { cursor: default; }
       <li>Truco vale 2, retruco 3 y vale cuatro 4. Solo puede subir quien aceptó la última apuesta. Si no se quiere, el que cantó suma lo apostado antes (1 punto si era el primer truco).</li>
       <li>El envido se canta antes de tirar tu primera carta: dos cartas del mismo palo suman 20 más sus valores (las figuras valen 0); si no hay dos del mismo palo, vale tu carta más alta hasta el 7. Empate lo gana el mano.</li>
       <li>Envido vale 2, real envido 3 y falta envido lo que le falta al que va ganando. Se puede cantar envido primero aunque te hayan cantado truco.</li>
+      <li>En 2 contra 2 se juega en parejas: los asientos se alternan (vos, rival, compañero, rival). Responde el canto el jugador siguiente. El envido cuenta el mejor de cada pareja y el que se va al mazo lo hace por los dos.</li>
       <li>No hay flor: tres cartas del mismo palo solo suman en el envido.</li>
     </ul>
   </details>
@@ -648,6 +709,7 @@ button.card:disabled { cursor: default; }
 })(typeof window !== 'undefined' ? window : globalThis);
 
 
+
 </script>
 <script>
 /* Capa de red del truco 1 contra 1, sobre PeerJS (conexión directa entre navegadores).
@@ -888,10 +950,11 @@ button.card:disabled { cursor: default; }
 
   root.TrucoNet = {
     flipEvent: flipEvent, makeSnapshot: makeSnapshot, RemoteGame: RemoteGame,
-    hostRoom: hostRoom, joinRoom: joinRoom, available: available, randomCode: randomCode, enc: enc, dec: dec
+    hostRoom: hostRoom, joinRoom: joinRoom, available: available, Beat: Beat, randomCode: randomCode, enc: enc, dec: dec
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.TrucoNet;
 })(typeof window !== 'undefined' ? window : globalThis);
+
 
 
 </script>
@@ -983,12 +1046,774 @@ button.card:disabled { cursor: default; }
 })(typeof window !== 'undefined' ? window : globalThis);
 
 
+
+</script>
+<script>
+/* Motor del truco argentino a 4 jugadores (2 contra 2, sin flor).
+ * Asientos 0..3 en el orden en que se juega. Equipo A = asientos 0 y 2; equipo B = asientos 1 y 3.
+ * Quien responde un canto es el asiento siguiente al que cantó (siempre es un rival). */
+(function (root) {
+  'use strict';
+  var T = root.Truco || (typeof require !== 'undefined' ? require('./engine.js') : null);
+  var POINTS = T.POINTS, TRUCO_NAMES = T.TRUCO_NAMES, ENVIDO_NAMES = T.ENVIDO_NAMES;
+
+  function teamOf(s) { return s % 2 === 0 ? 'A' : 'B'; }
+  function otherTeam(t) { return t === 'A' ? 'B' : 'A'; }
+  function nextSeat(s) { return (s + 1) % 4; }
+
+  function Game4(target, rng) {
+    this.target = target || 30;
+    this.rng = rng || Math.random;
+    this.scores = { A: 0, B: 0 };
+    this.mano = null;
+    this.over = false;
+    this.handOver = true;
+    this.events = [];
+    this.handNo = 0;
+    this.names = ['Vos', 'Beto', 'Coco', 'Nacho'];
+  }
+  var G = Game4.prototype;
+
+  G.emit = function (e) { this.events.push(e); };
+  G.drain = function () { var e = this.events; this.events = []; return e; };
+
+  G.startHand = function () {
+    this.handNo++;
+    this.mano = this.mano === null ? Math.floor(this.rng() * 4) : nextSeat(this.mano);
+    var deck = T.makeDeck(), i, j, t;
+    for (i = deck.length - 1; i > 0; i--) {
+      j = Math.floor(this.rng() * (i + 1));
+      t = deck[i]; deck[i] = deck[j]; deck[j] = t;
+    }
+    this.dealt = [0, 1, 2, 3].map(function (s) { return deck.slice(3 * s, 3 * s + 3); });
+    this.hands = this.dealt.map(function (h) { return h.slice(); });
+    this.table = [{}, {}, {}];
+    this.order = [[], [], []];
+    this.baza = 0;
+    this.wins = [];
+    this.turn = this.mano;
+    this.truco = { level: 0, canRaise: null, pending: null };
+    this.envido = { done: false, chain: [], pending: null };
+    this.handOver = false;
+    this.emit({ type: 'deal', mano: this.mano });
+  };
+
+  G.actor = function () {
+    if (this.over || this.handOver) return null;
+    if (this.envido.pending) return nextSeat(this.envido.pending.by);
+    if (this.truco.pending) return nextSeat(this.truco.pending.by);
+    return this.turn;
+  };
+
+  G.faltaPoints = function () {
+    return Math.max(1, this.target - Math.max(this.scores.A, this.scores.B));
+  };
+
+  G.envidoStake = function (chain) {
+    if (chain.indexOf('falta') >= 0) return this.faltaPoints();
+    return chain.reduce(function (s, x) { return s + (x === 'real' ? 3 : 2); }, 0);
+  };
+
+  G.envidoDeclineStake = function () {
+    var prev = this.envido.chain.slice(0, -1);
+    return prev.length ? this.envidoStake(prev) : 1;
+  };
+
+  G.envidoRaises = function () {
+    var c = this.envido.chain, last = c[c.length - 1], out = [];
+    var nEnv = c.filter(function (x) { return x === 'envido'; }).length;
+    if (last === 'envido') {
+      if (nEnv < 2) out.push('envido');
+      out.push('real', 'falta');
+    } else if (last === 'real') {
+      out.push('falta');
+    }
+    return out;
+  };
+
+  G.envidoAllowed = function (who) {
+    var e = this.envido;
+    return !e.done && !e.pending && !this.truco.pending && this.baza === 0 && !this.table[0][who] &&
+      this.truco.level === 0 && this.turn === who;
+  };
+
+  G.canTruco = function (who) {
+    var t = this.truco;
+    if (t.pending || t.level >= 3) return false;
+    return t.canRaise === null || t.canRaise === teamOf(who);
+  };
+
+  G.nextTrucoLevel = function () {
+    return (this.truco.pending ? this.truco.pending.level : this.truco.level) + 1;
+  };
+
+  G.legal = function (who) {
+    if (this.actor() !== who) return [];
+    var acts = [], e = this.envido, t = this.truco;
+    if (e.pending) {
+      acts.push({ type: 'quiero' }, { type: 'noquiero' });
+      this.envidoRaises().forEach(function (r) { acts.push({ type: r }); });
+      return acts;
+    }
+    if (t.pending) {
+      acts.push({ type: 'quiero' }, { type: 'noquiero' });
+      if (t.pending.level < 3) acts.push({ type: 'truco' });
+      if (t.level === 0 && !e.done && this.baza === 0 && !this.table[0][who]) {
+        ['envido', 'real', 'falta'].forEach(function (r) { acts.push({ type: r }); });
+      }
+      return acts;
+    }
+    this.hands[who].forEach(function (c, i) { acts.push({ type: 'play', idx: i }); });
+    if (this.envidoAllowed(who)) {
+      ['envido', 'real', 'falta'].forEach(function (r) { acts.push({ type: r }); });
+    }
+    if (this.canTruco(who)) acts.push({ type: 'truco' });
+    acts.push({ type: 'mazo' });
+    return acts;
+  };
+
+  G.award = function (team, pts) {
+    this.scores[team] += pts;
+    this.emit({ type: 'score', A: this.scores.A, B: this.scores.B });
+    if (this.scores[team] >= this.target) {
+      this.over = true;
+      this.handOver = true;
+      this.emit({ type: 'gameOver', winner: team });
+    }
+  };
+
+  G.endHand = function (winner, pts, reason, by) {
+    this.handOver = true;
+    this.emit({ type: 'handEnd', winner: winner, pts: pts, reason: reason, by: by === undefined ? null : by });
+    this.award(winner, pts);
+  };
+
+  G.resolveEnvido = function () {
+    var e = this.envido, pts = this.dealt.map(function (h) { return T.envidoPoints(h); });
+    var best = Math.max.apply(null, pts), seat = 0, d, s;
+    for (d = 0; d < 4; d++) {   // en empate gana el más cercano al mano
+      s = (this.mano + d) % 4;
+      if (pts[s] === best) { seat = s; break; }
+    }
+    var stake = this.envidoStake(e.chain), winner = teamOf(seat);
+    e.done = true; e.pending = null;
+    this.emit({
+      type: 'envidoResult', declined: false, winner: winner, stake: stake, seat: seat, mano: this.mano,
+      A: Math.max(pts[0], pts[2]), B: Math.max(pts[1], pts[3])
+    });
+    this.award(winner, stake);
+  };
+
+  G.act = function (who, a) {
+    var ok = this.legal(who).some(function (l) {
+      return l.type === a.type && (a.type !== 'play' || l.idx === a.idx);
+    });
+    if (!ok) throw new Error('Acción ilegal de ' + who + ': ' + JSON.stringify(a));
+    var e = this.envido, t = this.truco, opp = otherTeam(teamOf(who));
+
+    switch (a.type) {
+      case 'play':
+        return this.playCard(who, a.idx);
+
+      case 'envido': case 'real': case 'falta':
+        e.chain.push(a.type);
+        e.pending = { by: who };
+        this.emit({ type: 'say', who: who, text: ENVIDO_NAMES[a.type] + '!' });
+        break;
+
+      case 'truco':
+        if (t.pending) t.level = t.pending.level; // quiero implícito al subir
+        t.pending = { level: t.level + 1, by: who };
+        this.emit({ type: 'say', who: who, text: TRUCO_NAMES[t.pending.level] + '!' });
+        break;
+
+      case 'quiero':
+        this.emit({ type: 'say', who: who, text: 'Quiero' });
+        if (e.pending) {
+          this.resolveEnvido();
+        } else {
+          t.level = t.pending.level;
+          t.canRaise = teamOf(who);
+          t.pending = null;
+        }
+        break;
+
+      case 'noquiero':
+        this.emit({ type: 'say', who: who, text: 'No quiero' });
+        if (e.pending) {
+          var pts = this.envidoDeclineStake();
+          e.done = true; e.pending = null;
+          this.emit({ type: 'envidoResult', declined: true, winner: opp, stake: pts, by: who });
+          this.award(opp, pts);
+        } else {
+          this.endHand(opp, POINTS[t.level], 'noquiero', who);
+        }
+        break;
+
+      case 'mazo':
+        this.emit({ type: 'say', who: who, text: 'Me voy al mazo' });
+        this.endHand(opp, POINTS[t.level], 'mazo', who);
+        break;
+    }
+  };
+
+  G.playCard = function (who, idx) {
+    var card = this.hands[who].splice(idx, 1)[0];
+    var row = this.table[this.baza], ord = this.order[this.baza];
+    row[who] = card;
+    ord.push(who);
+    this.emit({ type: 'play', who: who, card: card, baza: this.baza });
+    if (ord.length < 4) { this.turn = nextSeat(who); return; }
+
+    var best = 0;
+    ord.forEach(function (x) { best = Math.max(best, T.power(row[x])); });
+    var tops = ord.filter(function (x) { return T.power(row[x]) === best; });
+    var teams = {};
+    tops.forEach(function (x) { teams[teamOf(x)] = true; });
+    var w = Object.keys(teams).length === 1 ? teamOf(tops[0]) : null;   // empate entre equipos = parda
+    var leader = w ? tops[0] : this.mano;
+    this.wins.push(w);
+    this.emit({ type: 'bazaEnd', baza: this.baza, winner: w, leader: leader });
+    var d = T.decide(this.wins, teamOf(this.mano), this.wins.length);
+    if (d) {
+      this.endHand(d, POINTS[this.truco.level], 'cartas');
+    } else {
+      this.baza++;
+      this.turn = leader;
+    }
+  };
+
+  root.Truco4 = { Game4: Game4, teamOf: teamOf, otherTeam: otherTeam, nextSeat: nextSeat };
+  if (typeof module !== 'undefined' && module.exports) module.exports = root.Truco4;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* Jugador de la computadora para el 2 contra 2. */
+(function (root) {
+  'use strict';
+  var T = root.Truco || (typeof require !== 'undefined' ? require('./engine.js') : null);
+  var T4 = root.Truco4 || (typeof require !== 'undefined' ? require('./engine4.js') : null);
+
+  function strength(g, who) {
+    var myT = T4.teamOf(who), opT = T4.otherTeam(myT);
+    var ps = g.hands[who].map(T.power).sort(function (a, b) { return b - a; });
+    var top = ps.length ? ps[0] * 0.6 + (ps.length > 1 ? ps[1] : ps[0]) * 0.4 : 0;
+    var s = (top - 1) / 13;
+    var mine = g.wins.filter(function (w) { return w === myT; }).length;
+    var theirs = g.wins.filter(function (w) { return w === opT; }).length;
+    s += 0.18 * mine - 0.15 * theirs;
+    return Math.max(0, Math.min(1, s));
+  }
+
+  // Qué carta tirar (índice en la mano), mirando al compañero y a los rivales de la baza en curso.
+  function pickCard(g, who, rng) {
+    var myT = T4.teamOf(who);
+    var order = g.hands[who].map(function (c, i) { return { i: i, p: T.power(c) }; })
+      .sort(function (a, b) { return a.p - b.p; }); // de menor a mayor
+    var ord = g.order[g.baza], row = g.table[g.baza], k;
+    if (!ord.length) {
+      if (g.baza === 0 && order.length === 3 && rng() < 0.5) return order[1].i;
+      return order[order.length - 1].i;
+    }
+    var bestOpp = 0, bestMate = 0;
+    ord.forEach(function (x) {
+      var p = T.power(row[x]);
+      if (T4.teamOf(x) === myT) bestMate = Math.max(bestMate, p); else bestOpp = Math.max(bestOpp, p);
+    });
+    var last = ord.length === 3;
+    if (bestMate > bestOpp) {
+      // el compañero va ganando: no lo piso si ya tiró algo fuerte o si soy el último
+      if (last || bestMate >= 9) return order[0].i;
+      for (k = 0; k < order.length; k++) if (order[k].p > bestMate && order[k].p >= 9) return order[k].i;
+      return order[0].i;
+    }
+    for (k = 0; k < order.length; k++) if (order[k].p > bestOpp) return order[k].i;
+    return order[0].i;
+  }
+
+  var K = { need: 23, thr: -0.15 };
+
+  function cpuAct4(g, who, rng) {
+    rng = rng || Math.random;
+    var legal = g.legal(who);
+    var has = function (t) { return legal.some(function (a) { return a.type === t; }); };
+    var e = g.envido, t = g.truco;
+    var myEnv = T.envidoPoints(g.dealt[who]);
+    var s = strength(g, who);
+    var noise = (rng() - 0.5) * 0.2;
+    var bonusMano = g.mano === who ? 1 : 0;
+
+    // 1) Responder un envido
+    if (e.pending) {
+      var last = e.chain[e.chain.length - 1];
+      var need = K.need - bonusMano + Math.round((rng() - 0.5) * 4);
+      if (last === 'falta') need += 3;
+      if (myEnv >= 33 && has('falta') && rng() < 0.5) return { type: 'falta' };
+      if (myEnv >= 30 && has('real') && rng() < 0.55) return { type: 'real' };
+      if (myEnv >= 29 && has('envido') && rng() < 0.4) return { type: 'envido' };
+      return { type: myEnv >= need ? 'quiero' : 'noquiero' };
+    }
+
+    // 2) Responder un truco (se puede cantar envido antes). Con un compañero detrás, se acepta un poco más.
+    if (t.pending) {
+      if (has('envido') || has('real') || has('falta')) {
+        if (myEnv >= 30 && has('real') && rng() < 0.6) return { type: 'real' };
+        if (myEnv >= 27 && has('envido') && rng() < 0.7) return { type: 'envido' };
+      }
+      var thr = [0, 0.4, 0.52, 0.64][t.pending.level] + K.thr;
+      if (s + noise >= thr + 0.22 && has('truco') && rng() < 0.5) return { type: 'truco' };
+      return { type: s + noise >= thr ? 'quiero' : 'noquiero' };
+    }
+
+    // 3) Mi turno
+    if (has('envido') && g.baza === 0) {
+      if (myEnv >= 33 && rng() < 0.35) return { type: 'falta' };
+      if (myEnv >= 31 && rng() < 0.5) return { type: 'real' };
+      if (myEnv >= 27 && rng() < 0.6) return { type: 'envido' };
+      if (myEnv >= 20 && rng() < 0.04) return { type: 'envido' };
+    }
+    if (has('truco')) {
+      var p = 0;
+      if (s > 0.82) p = 0.7;
+      else if (s > 0.62) p = 0.35;
+      else if (s < 0.3 && t.level === 0) p = 0.03;
+      if (rng() < p) return { type: 'truco' };
+    }
+    return { type: 'play', idx: pickCard(g, who, rng) };
+  }
+
+  root.TrucoBot4 = { K: K, cpuAct4: cpuAct4, strength: strength, pickCard: pickCard };
+  if (typeof module !== 'undefined' && module.exports) module.exports = root.TrucoBot4;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* Capa de red del truco 2 contra 2, sobre PeerJS (conexión directa entre navegadores).
+ * El anfitrión (asiento 0) lleva la partida. Cada invitado manda sus jugadas y recibe, en cada paso,
+ * los eventos (públicos) más una foto del estado con SUS cartas. Los lugares vacíos los juega la compu. */
+(function (root) {
+  'use strict';
+  var N = root.TrucoNet || (typeof require !== 'undefined' ? require('./net.js') : null);
+  var enc = N.enc, dec = N.dec;
+  var PREFIX4 = 'truco-ar2v2-';
+  var BOT_NAMES = ['', 'Beto', 'Coco', 'Nacho'];
+  var PREF = [2, 1, 3];   // el primer invitado es el compañero del anfitrión
+
+  function available() { return typeof root.Peer === 'function'; }
+  function cleanName(s, def) {
+    s = String(s == null ? '' : s).replace(/[\u0000-\u001f<>&"]/g, '').trim().slice(0, 14);
+    return s || def;
+  }
+
+  // Foto del estado para un asiento: solo incluye las cartas de ese asiento.
+  function makeSnapshot4(g, seat, he) {
+    var lg = g.legal(seat).map(function (a) { return a.type === 'play' ? ['play', a.idx] : [a.type]; });
+    var t = g.truco, e = g.envido;
+    return {
+      tg: g.target, hn: g.handNo, sc: { A: g.scores.A, B: g.scores.B }, mn: g.mano, bz: g.baza,
+      tb: g.table.map(function (r) { return [0, 1, 2, 3].map(function (x) { return enc(r[x]); }); }),
+      w: g.wins.slice(),
+      hd: g.hands[seat].map(enc), dl: g.dealt[seat].map(enc),
+      oc: g.hands.map(function (h) { return h.length; }),
+      ac: g.actor(), lg: lg,
+      tl: t.level, tp: t.pending ? { lv: t.pending.level, by: t.pending.by } : null, cr: t.canRaise,
+      ec: e.chain.slice(), ep: e.pending ? e.pending.by : null, ed: e.done,
+      nl: g.nextTrucoLevel(), ho: g.handOver, ov: g.over, he: he || null,
+      ys: seat, nm: g.names.slice()
+    };
+  }
+
+  /* Lo que ve un invitado. Imita lo que la interfaz lee del motor. */
+  function RemoteGame4() {
+    this.target = 30; this.handNo = 0; this.scores = { A: 0, B: 0 };
+    this.mano = null; this.baza = 0; this.table = [{}, {}, {}]; this.order = [[], [], []]; this.wins = [];
+    this.hands = [[], [], [], []]; this.dealt = [[], [], [], []];
+    this.truco = { level: 0, pending: null, canRaise: null };
+    this.envido = { chain: [], pending: null, done: false };
+    this.handOver = true; this.over = false; this.lastHandEnd = null;
+    this.names = ['', '', '', '']; this.mySeat = 0;
+    this._actor = null; this._legal = []; this._nl = 1; this.pendingAct = false;
+    this.send = function () {};
+  }
+  var R = RemoteGame4.prototype;
+  R.applySnapshot = function (s) {
+    this.target = s.tg; this.handNo = s.hn; this.scores = { A: s.sc.A, B: s.sc.B };
+    this.mano = s.mn; this.baza = s.bz; this.mySeat = s.ys;
+    this.table = s.tb.map(function (r) {
+      var row = {};
+      r.forEach(function (v, i) { var c = dec(v); if (c) row[i] = c; });
+      return row;
+    });
+    this.wins = s.w.slice();
+    this.hands = s.oc.map(function (n, i) { return i === s.ys ? s.hd.map(dec) : { length: n }; });
+    this.dealt = [[], [], [], []];
+    this.dealt[s.ys] = s.dl.map(dec);
+    this._actor = s.ac;
+    this._legal = s.lg.map(function (l) { return l[0] === 'play' ? { type: 'play', idx: l[1] } : { type: l[0] }; });
+    this.truco = { level: s.tl, pending: s.tp ? { level: s.tp.lv, by: s.tp.by } : null, canRaise: s.cr };
+    this.envido = { chain: s.ec.slice(), pending: s.ep === null ? null : { by: s.ep }, done: s.ed };
+    this._nl = s.nl; this.handOver = s.ho; this.over = s.ov;
+    this.lastHandEnd = s.he ? { winner: s.he.w, pts: s.he.p, reason: s.he.r, by: s.he.b } : null;
+    this.names = s.nm.slice();
+    this.pendingAct = false;
+  };
+  R.actor = function () {
+    if (this.over || this.handOver || this.pendingAct) return null;
+    return this._actor;
+  };
+  R.legal = function (who) { return who === this.mySeat && this.actor() === who ? this._legal : []; };
+  R.nextTrucoLevel = function () { return this._nl; };
+  R.act = function (who, a) { this.pendingAct = true; this.send(a); };
+  R.startHand = function () { this.send({ type: 'next' }); };
+  R.drain = function () { return []; };
+
+  /* Anfitrión: abre la sala, asigna asientos y reparte mensajes. */
+  function hostRoom4(code, cb) {
+    if (!(this instanceof hostRoom4)) return new hostRoom4(code, cb);
+    var self = this;
+    var peer = new root.Peer(PREFIX4 + code, { debug: 0 });
+    var seats = [{ kind: 'host', name: cleanName(cb.hostName, 'Anfitrión') }, null, null, null];
+    var closed = false, ready = false, started = false;
+
+    function rec(s) { return seats[s] && seats[s].kind === 'guest' ? seats[s] : null; }
+    function live(s) { var r = rec(s); return !!(r && r.conn && r.conn.open); }
+    function send(s, m) {
+      var r = rec(s);
+      if (r && r.conn && r.conn.open) { try { r.conn.send(m); } catch (e) { /* el próximo mensaje trae el estado completo */ } }
+    }
+    function info() {
+      return seats.map(function (r, i) {
+        if (i === 0) return { n: r.name, k: 'host', c: true };
+        if (!r) return { n: BOT_NAMES[i], k: 'empty', c: false };
+        return { n: r.name, k: 'guest', c: live(i) };
+      });
+    }
+    function broadcastLobby() {
+      var m = { lobby: { seats: info(), st: started, tg: cb.target } }, s;
+      for (s = 1; s < 4; s++) send(s, m);
+      if (cb.onLobby && !closed) cb.onLobby(info(), started);
+    }
+    function dropConn(s, c) {
+      var r = rec(s);
+      if (!r || r.conn !== c) return;
+      r.conn = null;
+      if (r.beat) { r.beat.stop(); r.beat = null; }
+      try { c.close(); } catch (e) { /* ya estaba cerrada */ }
+      if (!started) seats[s] = null;   // antes de empezar, el lugar queda libre
+      if (!closed) { broadcastLobby(); if (cb.onLeave) cb.onLeave(s); }
+    }
+    function pickSeat() {
+      var i, r;
+      for (i = 0; i < 3; i++) if (!seats[PREF[i]]) return PREF[i];
+      if (started) {
+        for (i = 0; i < 3; i++) { r = rec(PREF[i]); if (r && !live(PREF[i])) return PREF[i]; }
+      }
+      return -1;
+    }
+    function reject(c) {
+      try { c.send({ full: 1 }); } catch (e) { /* nada */ }
+      setTimeout(function () { try { c.close(); } catch (e) { /* nada */ } }, 300);
+    }
+    function identify(c, h) {
+      var gid = String((h && h.gid) || '').slice(0, 40);
+      if (!gid) { reject(c); return -1; }
+      var name = cleanName(h && h.name, 'Invitado'), s = -1, i, r;
+      for (i = 1; i < 4; i++) if (rec(i) && rec(i).gid === gid) s = i;
+      var returning = s !== -1;
+      if (!returning) {
+        s = pickSeat();
+        if (s === -1) { reject(c); return -1; }
+        seats[s] = { kind: 'guest', gid: gid, name: name, conn: null, beat: null, k: 0 };
+      } else {
+        r = seats[s];
+        r.name = name;
+        if (r.conn && r.conn !== c) {
+          var old = r.conn;
+          r.conn = null;
+          if (r.beat) { r.beat.stop(); r.beat = null; }
+          try { old.close(); } catch (e) { /* nada */ }
+        }
+      }
+      r = seats[s];
+      r.conn = c;
+      r.beat = new N.Beat(function (m) { send(s, m); }, function () { dropConn(s, c); });
+      send(s, { welcome: { seat: s, st: started, tg: cb.target, code: code } });
+      broadcastLobby();
+      if (cb.onJoin) cb.onJoin(s, returning);
+      return s;
+    }
+
+    peer.on('open', function () { ready = true; if (!closed && cb.onReady) cb.onReady(); });
+    peer.on('error', function (err) { if (!closed && cb.onError) cb.onError((err && err.type) || 'error', ready); });
+    peer.on('disconnected', function () {
+      if (!closed) { try { peer.reconnect(); } catch (e) { /* se vuelve a intentar con el próximo evento */ } }
+    });
+    peer.on('connection', function (c) {
+      if (closed) { try { c.close(); } catch (e) { /* nada */ } return; }
+      var seat = -1, ident = false;
+      var t = setTimeout(function () { if (!ident) { try { c.close(); } catch (e) { /* nada */ } } }, 10000);
+      c.on('data', function (d) {
+        if (closed || !d || typeof d !== 'object') return;
+        if (!ident) {
+          if (d.hello) { ident = true; clearTimeout(t); seat = identify(c, d.hello); }
+          return;
+        }
+        if (seat < 1) return;
+        var r = rec(seat);
+        if (!r || r.conn !== c) return;
+        if (r.beat) r.beat.touch();
+        if (d.a && typeof d.a === 'object' && cb.onAction) cb.onAction(seat, d.a);
+      });
+      c.on('close', function () { clearTimeout(t); if (seat > 0) dropConn(seat, c); });
+      c.on('error', function () { clearTimeout(t); if (seat > 0) dropConn(seat, c); });
+    });
+
+    this.publish = function (events, g, he) {
+      var s, r;
+      for (s = 1; s < 4; s++) {
+        if (!live(s)) continue;
+        r = rec(s); r.k++;
+        send(s, { m: { k: r.k, e: events, s: makeSnapshot4(g, s, he) } });
+      }
+    };
+    this.sendSnapshot = function (s, g, he) {
+      var r = rec(s);
+      if (!r || !live(s)) return;
+      r.k++;
+      send(s, { m: { k: r.k, e: [], s: makeSnapshot4(g, s, he) } });
+    };
+    this.setStarted = function (v) { started = !!v; broadcastLobby(); };
+    this.info = info;
+    this.isHuman = function (s) { return s === 0 || live(s); };
+    this.names = function () {
+      return seats.map(function (r, i) { return r ? r.name : BOT_NAMES[i]; });
+    };
+    this.close = function () {
+      closed = true;
+      var s;
+      for (s = 1; s < 4; s++) {
+        var r = rec(s);
+        if (!r) continue;
+        if (r.beat) { r.beat.stop(); r.beat = null; }
+        send(s, { bye: 1 });
+        var c = r.conn;
+        if (c) setTimeout(function (cc) { try { cc.close(); } catch (e) { /* nada */ } }.bind(null, c), 120);
+      }
+      setTimeout(function () { try { peer.destroy(); } catch (e) { /* nada */ } }, 200);
+    };
+  }
+
+  /* Invitado: se conecta con el código y juega su asiento. */
+  function joinRoom4(code, cb) {
+    if (!(this instanceof joinRoom4)) return new joinRoom4(code, cb);
+    var peer = new root.Peer(undefined, { debug: 0 });
+    var conn = null, beat = null, lastK = null, closed = false, welcomed = false, gone = false, timer = null;
+
+    function send(m) { if (conn && conn.open) { try { conn.send(m); } catch (e) { /* nada */ } } }
+    function cleanup() { clearTimeout(timer); if (beat) { beat.stop(); beat = null; } }
+    function lost() {
+      if (gone || closed) return;
+      gone = true; cleanup();
+      if (welcomed) cb.onHostLeft(false); else cb.onError('closed', false);
+    }
+
+    peer.on('open', function () {
+      if (closed) return;
+      conn = peer.connect(PREFIX4 + code, { reliable: true, serialization: 'json' });
+      conn.on('open', function () {
+        if (closed || gone) return;
+        beat = new N.Beat(send, lost);
+        send({ hello: { gid: cb.gid, name: cb.name } });
+      });
+      conn.on('data', function (d) {
+        if (closed || gone || !d || typeof d !== 'object') return;
+        if (beat) beat.touch();
+        if (d.full) { gone = true; cleanup(); cb.onFull(); return; }
+        if (d.bye) { gone = true; cleanup(); cb.onHostLeft(true); return; }
+        if (d.welcome) { welcomed = true; clearTimeout(timer); cb.onWelcome(d.welcome); return; }
+        if (d.lobby) { cb.onLobby(d.lobby); return; }
+        if (d.m && typeof d.m === 'object') { var prev = lastK; lastK = d.m.k; cb.onMessage(d.m, prev); }
+      });
+      conn.on('close', lost);
+      conn.on('error', lost);
+    });
+    peer.on('error', function (err) {
+      var type = (err && err.type) || 'error';
+      if (closed || gone) return;
+      if (welcomed && type !== 'peer-unavailable') return;   // ya hay conexión directa: el servicio de salas no importa
+      gone = true; cleanup();
+      cb.onError(type, welcomed);
+    });
+    timer = setTimeout(function () {
+      if (welcomed || gone || closed) return;
+      gone = true; cleanup();
+      cb.onError('timeout', false);
+    }, 15000);
+
+    this.send = function (a) { send({ a: { t: a.type, i: a.idx === undefined ? null : a.idx } }); };
+    this.close = function () {
+      closed = true; cleanup();
+      try { if (conn) conn.close(); } catch (e) { /* nada */ }
+      try { peer.destroy(); } catch (e) { /* nada */ }
+    };
+  }
+
+  root.TrucoNet4 = {
+    available: available, makeSnapshot4: makeSnapshot4, RemoteGame4: RemoteGame4,
+    hostRoom4: hostRoom4, joinRoom4: joinRoom4, BOT_NAMES: BOT_NAMES, cleanName: cleanName, PREFIX4: PREFIX4
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = root.TrucoNet4;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* Controlador del anfitrión del 2 contra 2: lleva la partida, juega los bots y reparte el estado a los invitados.
+ * Sin DOM, para poder probarlo en Node. La interfaz le pasa callbacks y le manda las jugadas del asiento 0. */
+(function (root) {
+  'use strict';
+  var T4 = root.Truco4 || (typeof require !== 'undefined' ? require('./engine4.js') : null);
+  var Bot = root.TrucoBot4 || (typeof require !== 'undefined' ? require('./cpu4.js') : null);
+  var NET4 = root.TrucoNet4 || (typeof require !== 'undefined' ? require('./net4.js') : null);
+
+  /* o: { code, target, hostName, offline, speed, net, busy(), onEvents(evts, game), onReady(), onError(type, wasReady),
+   *      onLobby(info, started), onRoster() } */
+  function HostCtl(o) {
+    var self = this;
+    var g = null, net = null, started = false, closed = false, botTimer = null, lastHE = null;
+    var speed = o.speed || 1;
+    var botNames = ['', 'Beto', 'Coco', 'Nacho'];
+
+    function names() {
+      if (net) return net.names();
+      return [(o.hostName || 'Vos'), botNames[1], botNames[2], botNames[3]];
+    }
+    function isHuman(s) { return s === 0 || (!!net && net.isHuman(s)); }
+
+    function step() {
+      if (closed || !g) return;
+      var evts = g.drain();
+      evts.forEach(function (e) {
+        if (e.type === 'deal') lastHE = null;
+        if (e.type === 'handEnd') lastHE = { w: e.winner, p: e.pts, r: e.reason, b: e.by === undefined ? null : e.by };
+      });
+      g.names = names();
+      if (net) net.publish(evts, g, lastHE);
+      o.onEvents(evts, g);
+      pump();
+    }
+
+    function pump() {
+      if (closed || botTimer || !g || g.over || g.handOver) return;
+      var a = g.actor();
+      if (a === null || isHuman(a)) return;
+      botTimer = setTimeout(runBot, (550 + Math.random() * 650) * speed);
+    }
+
+    function safeAct(a) {
+      var legal = g.legal(a), pick = legal.filter(function (x) { return x.type === 'play'; })[0] || legal[0];
+      if (pick) g.act(a, pick);
+    }
+
+    function runBot() {
+      botTimer = null;
+      if (closed || !g || g.over || g.handOver) return;
+      if (o.busy && o.busy()) { botTimer = setTimeout(runBot, 150 * speed + 20); return; }
+      var a = g.actor();
+      if (a === null || isHuman(a)) return;
+      try { g.act(a, Bot.cpuAct4(g, a, Math.random)); } catch (err) { safeAct(a); }
+      step();
+    }
+
+    function snapshotTo(seat) {
+      if (!net || !g) return;
+      g.names = names();
+      net.sendSnapshot(seat, g, lastHE);
+    }
+
+    function newGame() {
+      g = new T4.Game4(o.target);
+      g.names = names();
+      lastHE = null;
+      g.startHand();
+      step();
+    }
+
+    function onAction(seat, a) {
+      if (closed || !started || !g) return;
+      if (a.t === 'next') { self.next(); return; }
+      if (a.t === 'rematch') { self.rematch(); return; }
+      var act = { type: String(a.t) };
+      if (a.t === 'play') act.idx = a.i | 0;
+      if (g.actor() !== seat) { snapshotTo(seat); return; }
+      try { g.act(seat, act); } catch (err) { snapshotTo(seat); return; }
+      step();
+    }
+
+    if (o.offline) {
+      setTimeout(function () { if (!closed && o.onReady) o.onReady(); }, 0);
+    } else {
+      var Net = o.net || NET4;
+      net = new Net.hostRoom4(o.code, {
+        hostName: o.hostName, target: o.target,
+        onReady: function () { if (o.onReady) o.onReady(); },
+        onError: function (type, wasReady) { if (o.onError) o.onError(type, wasReady); },
+        onLobby: function (info, st) { if (o.onLobby) o.onLobby(info, st); },
+        onAction: onAction,
+        onJoin: function (seat) {
+          if (started && g) { snapshotTo(seat); if (o.onRoster) o.onRoster(); }
+        },
+        onLeave: function () {
+          if (started && o.onRoster) o.onRoster();
+          pump();
+        }
+      });
+    }
+
+    this.start = function () {
+      if (started || closed) return;
+      started = true;
+      if (net) net.setStarted(true);
+      newGame();
+    };
+    this.act = function (a) {
+      if (closed || !started || !g || g.actor() !== 0) return false;
+      try { g.act(0, a); } catch (err) { return false; }
+      step();
+      return true;
+    };
+    this.next = function () { if (g && g.handOver && !g.over) { g.startHand(); step(); } };
+    this.rematch = function () { if (started && g && g.over) newGame(); };
+    this.game = function () { return g; };
+    this.isStarted = function () { return started; };
+    this.names = names;
+    this.isHuman = isHuman;
+    this.info = function () {
+      if (net) return net.info();
+      return names().map(function (n, i) { return { n: n, k: i === 0 ? 'host' : 'empty', c: i === 0 }; });
+    };
+    this.humans = function () {
+      var n = 0, s;
+      for (s = 0; s < 4; s++) if (isHuman(s)) n++;
+      return n;
+    };
+    this.close = function () {
+      closed = true;
+      clearTimeout(botTimer); botTimer = null;
+      if (net) net.close();
+    };
+  }
+
+  root.TrucoHost4 = { HostCtl: HostCtl };
+  if (typeof module !== 'undefined' && module.exports) module.exports = root.TrucoHost4;
+})(typeof window !== 'undefined' ? window : globalThis);
+
 </script>
 <script>
 /* Interfaz del truco. Usa Truco (engine.js) y TrucoCPU (cpu.js). */
 (function () {
   'use strict';
-  var T = window.Truco, CPU = window.TrucoCPU, N = window.TrucoNet;
+  var T = window.Truco, CPU = window.TrucoCPU, N = window.TrucoNet, N4 = window.TrucoNet4;
   var SPEED = typeof window.__TRUCO_SPEED === 'number' ? window.__TRUCO_SPEED : 1;
   var $ = function (id) { return document.getElementById(id); };
 
@@ -997,7 +1822,7 @@ button.card:disabled { cursor: default; }
   var NAMES = { me: 'Vos', cpu: 'El rival' };
 
   var g = null, view = null, queue = [], locked = true, vozTimers = {}, gen = 0, running = false;
-  var mode = 'cpu', host = null, guestObj = null, roomCode = '';
+  var selMode = '1', mode = 'cpu', host = null, guestObj = null, roomCode = '';
   var guestHere = false, hostStarted = false, hostFound = false, hostTarget = 30;
 
   /* ---------- cartas ---------- */
@@ -1491,6 +2316,7 @@ button.card:disabled { cursor: default; }
     'webrtc': 'Falló la conexión directa entre los dos navegadores. En algunas redes (por ejemplo ciertos datos móviles) puede no funcionar.'
   };
   function errMsg(type) { return ERR[type] || 'No se pudo conectar (' + type + ').'; }
+  function noLibMsg() { return 'No se pudo cargar la conexión con amigos. Revisá tu internet y recargá la página.'; }
   function noLib() { lobbyMenu('No se pudo cargar la conexión con amigos. Revisá tu internet y recargá la página.'); }
 
   function leaveRoom(msg) {
@@ -1505,8 +2331,50 @@ button.card:disabled { cursor: default; }
     lobbyMenu(msg);
   }
 
+  function myName() {
+    var el = $('nombre');
+    if (el) {
+      lastName = el.value;
+      try { localStorage.setItem('truco-nombre', lastName); } catch (err) { /* nada */ }
+    }
+    return lastName;
+  }
+  var GID = null, lastName = '';
+  function gid() {
+    if (GID) return GID;
+    try { GID = sessionStorage.getItem('truco-gid'); } catch (err) { /* nada */ }
+    if (!GID) {
+      GID = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      try { sessionStorage.setItem('truco-gid', GID); } catch (err) { /* nada */ }
+    }
+    return GID;
+  }
+
+  /* Pasa a la mesa 2 contra 2 (ui4). kind: 'create' | 'solo' | 'join' */
+  function startX4(kind, code) {
+    if (!window.Truco4UI || host || guestObj) return;
+    var name = N4.cleanName(myName(), kind === 'join' ? 'Invitado' : 'Anfitrión');
+    var tgt = parseInt($('target').value, 10) || 30;
+    queue = []; gen++; running = false; locked = true;
+    ['score1', 'mesa1', 'acciones'].forEach(function (id) { $(id).hidden = true; });
+    mode = 'x4';
+    onlineChrome(true);
+    window.Truco4UI.start({
+      kind: kind, code: code, target: tgt, name: name, gid: gid(),
+      onExit: function (msg, c) {
+        mode = 'cpu';
+        onlineChrome(false);
+        ['score1', 'mesa1', 'acciones'].forEach(function (id) { $(id).hidden = false; });
+        $('conn').textContent = '';
+        newGame();
+        lobbyMenu(msg, c);
+      }
+    });
+  }
+
   function createRoom(tries) {
-    if (host || guestObj) return;
+    if (host || guestObj || mode === 'x4') return;
+    if (selMode === '2') { startX4('create'); return; }
     if (!N.available()) { noLib(); return; }
     tries = typeof tries === 'number' ? tries : 0;
     var code = N.randomCode(), h = null;
@@ -1545,7 +2413,7 @@ button.card:disabled { cursor: default; }
   }
 
   function joinRoom() {
-    if (host || guestObj) return;
+    if (host || guestObj || mode === 'x4') return;
     var code = ($('codigo').value || '').trim().toLowerCase();
     if (!/^[a-z0-9]{5}$/.test(code)) { lobbyMenu('El código tiene 5 letras o números.', code); return; }
     if (!N.available()) { noLib(); return; }
@@ -1564,6 +2432,14 @@ button.card:disabled { cursor: default; }
         onMessage: function (m, prev) { if (guestObj === j) guestOnMessage(m, prev); },
         onError: function (type) {
           if (guestObj !== j) return;
+          if (type === 'peer-unavailable' && window.Truco4UI && !hostFound) {
+            // No es una sala 1 contra 1: probamos si es una de 2 contra 2.
+            guestObj = null; host = null;
+            try { j.close(); } catch (err) { /* nada */ }
+            mode = 'cpu'; onlineChrome(false);
+            startX4('join', code);
+            return;
+          }
           leaveRoom(errMsg(type));
         }
       });
@@ -1584,16 +2460,30 @@ button.card:disabled { cursor: default; }
   function escapeHtml(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   function lobbyMenu(msg, code) {
+    var saved = '';
+    try { saved = localStorage.getItem('truco-nombre') || ''; } catch (err) { /* nada */ }
+    var two = selMode === '2';
     $('lobby').hidden = false;
     $('lobbyBody').innerHTML =
+      '<div class="lobby-row"><span class="lobby-or">Modo:</span><div class="modes" role="group" aria-label="Modo de juego">' +
+      '<button type="button" id="m1" aria-pressed="' + (!two) + '">1 contra 1</button>' +
+      '<button type="button" id="m2" aria-pressed="' + two + '">2 contra 2</button></div>' +
+      '<input id="nombre" class="name-in" type="text" maxlength="14" placeholder="Tu nombre" autocomplete="off" spellcheck="false" value="' + escapeHtml(saved) + '"></div>' +
       '<div class="lobby-row"><button type="button" class="btn primary" id="mkRoom">Crear sala</button>' +
-      '<span class="lobby-or">o entrá a la de tu amigo:</span>' +
+      '<span class="lobby-or">o entrá a la de tus amigos:</span>' +
       '<input id="codigo" type="text" maxlength="5" placeholder="Código" autocomplete="off" autocapitalize="characters" spellcheck="false" value="' + escapeHtml(code || '') + '">' +
       '<button type="button" class="btn" id="joinRoom">Unirme</button></div>' +
+      (two ? '<div class="lobby-row"><button type="button" class="btn" id="soloRoom">Jugar 2 contra 2 contra la compu</button></div>' : '') +
       '<p class="lobby-msg" id="lobbyMsg" role="status">' + (msg ? escapeHtml(msg) : '') + '</p>' +
-      '<p class="hint">Tu amigo abre este mismo link y escribe el código. La sala dura mientras las dos pestañas sigan abiertas, y la conexión es directa entre los dos navegadores. Se juega a lo que elijas arriba.</p>';
-    $('mkRoom').addEventListener('click', function () { createRoom(0); });
-    $('joinRoom').addEventListener('click', joinRoom);
+      '<p class="hint">' + (two
+        ? 'En 2 contra 2 jugás en pareja con el primer amigo que entre; los lugares libres los juega la compu y se pueden ocupar cuando quieran.'
+        : 'Tu amigo abre este mismo link y escribe el código.') +
+      ' Para unirte no hace falta elegir el modo. La conexión es directa entre los navegadores y la sala dura mientras las pestañas sigan abiertas. Se juega a lo que elijas arriba.</p>';
+    $('m1').addEventListener('click', function () { selMode = '1'; lobbyMenu('', $('codigo').value); });
+    $('m2').addEventListener('click', function () { selMode = '2'; lobbyMenu('', $('codigo').value); });
+    $('mkRoom').addEventListener('click', function () { myName(); createRoom(0); });
+    $('joinRoom').addEventListener('click', function () { myName(); joinRoom(); });
+    if ($('soloRoom')) $('soloRoom').addEventListener('click', function () { startX4('solo'); });
     $('codigo').addEventListener('keydown', function (e) { if (e.key === 'Enter') joinRoom(); });
   }
 
@@ -1628,6 +2518,10 @@ button.card:disabled { cursor: default; }
     if (el.hidden) lobbyMenu(''); else el.hidden = true;
   }
 
+  window.TrucoUI1 = {
+    cardEl: cardEl, backEl: backEl, tallyHTML: tallyHTML, escapeHtml: escapeHtml, errMsg: errMsg, noLibMsg: noLibMsg
+  };
+
   document.addEventListener('DOMContentLoaded', function () {
     $('nueva').addEventListener('click', newGame);
     $('online').addEventListener('click', toggleLobby);
@@ -1636,6 +2530,541 @@ button.card:disabled { cursor: default; }
   });
 })();
 
+
+
+</script>
+<script>
+/* Interfaz del 2 contra 2 (parte A: estado, vista y dibujo de la mesa). Va junto con ui4b.js dentro de una misma función. */
+(function () {
+  'use strict';
+  var T = window.Truco, T4 = window.Truco4, H4 = window.TrucoHost4, N4 = window.TrucoNet4, U = window.TrucoUI1;
+  var SPEED = typeof window.__TRUCO_SPEED === 'number' ? window.__TRUCO_SPEED : 1;
+  var $ = function (id) { return document.getElementById(id); };
+  var DELAY = { deal: 350, say: 1000, play: 600, bazaEnd: 950, envidoResult: 1900, score: 250, handEnd: 500, gameOver: 200 };
+
+  var sess = null;      // sesión activa: { opts, kind }
+  var ctl = null, guest = null, g = null, me = 0, roomCode = '', started = false, info = null, target = 30;
+  var view = null, queue = [], running = false, locked = true, gen = 0, vozTimers = {};
+
+  var esc = U.escapeHtml;
+  function myTeam() { return T4.teamOf(me); }
+  function theirTeam() { return T4.otherTeam(myTeam()); }
+  function names() { return (g && g.names) || ['Vos', 'Beto', 'Coco', 'Nacho']; }
+  function nameOf(s) { return s === me ? 'Vos' : (names()[s] || 'Jugador'); }
+  function isMine(s) { return T4.teamOf(s) === myTeam(); }
+  function humanAt(s) {
+    if (ctl) return ctl.isHuman(s);
+    if (info && info[s]) return info[s].k === 'host' || (info[s].k === 'guest' && info[s].c);
+    return s === me;
+  }
+
+  /* ---------- vista ---------- */
+  function freshView(mano) {
+    return {
+      counts: [3, 3, 3, 3], myHand: g.dealt[me].slice(), table: [{}, {}, {}], marks: [null, null, null],
+      active: 0, envidoNote: '', handEnd: null, gameOver: null, mano: mano
+    };
+  }
+  function emptyView() {
+    return { counts: [0, 0, 0, 0], myHand: [], table: [{}, {}, {}], marks: [], active: 0, envidoNote: '', handEnd: null, gameOver: null, mano: null };
+  }
+  function resyncView() {
+    view = {
+      counts: [0, 1, 2, 3].map(function (s) { return g.hands[s].length; }),
+      myHand: g.hands[me].slice(),
+      table: g.table.map(function (r) { var o = {}; [0, 1, 2, 3].forEach(function (s) { if (r[s]) o[s] = r[s]; }); return o; }),
+      marks: g.wins.map(function (w) { return w || 'tie'; }), active: g.wins.length,
+      envidoNote: '', handEnd: g.lastHandEnd || null, gameOver: null, mano: g.mano
+    };
+    renderAll();
+  }
+
+  /* ---------- dibujo ---------- */
+  function renderScore() {
+    [['us', myTeam()], ['them', theirTeam()]].forEach(function (p) {
+      var s = g.scores[p[1]], row = $('score4-' + p[0]);
+      row.querySelector('.num').textContent = s;
+      var tier = row.querySelector('.tier');
+      if (g.target > 15) {
+        tier.textContent = s >= 15 ? 'buenas' : 'malas';
+        tier.className = 'tier ' + (s >= 15 ? 'buenas' : 'malas');
+      } else { tier.textContent = ''; tier.className = 'tier'; }
+      var tl = row.querySelector('.tally');
+      tl.innerHTML = U.tallyHTML(s, g.target);
+      tl.setAttribute('aria-label', s + ' de ' + g.target + ' puntos');
+    });
+  }
+
+  function renderSeats() {
+    var el = $('seats4'), actor = running || !g || g.handOver || g.over ? null : g.actor();
+    el.innerHTML = '';
+    [1, 2, 3].forEach(function (rel) {
+      var s = (me + rel) % 4, d = document.createElement('div'), mate = isMine(s), i;
+      d.className = 'seat4 ' + (mate ? 'mate' : 'rival') + (actor === s ? ' turn' : '');
+      var role = (mate ? 'Compañero' : 'Rival') + (humanAt(s) ? '' : ' · compu');
+      var backs = '';
+      for (i = 0; i < (view ? view.counts[s] : 0); i++) backs += '<span class="card back"></span>';
+      d.innerHTML = '<div class="seat-name">' + esc(nameOf(s)) + (view && view.mano === s ? ' <span class="chip">Mano</span>' : '') + '</div>' +
+        '<div class="seat-role">' + role + '</div><div class="seat-backs">' + backs + '</div>';
+      el.appendChild(d);
+    });
+  }
+
+  function renderCentro() {
+    var el = $('centro4'), i;
+    el.innerHTML = '';
+    var order = [1, 2, 0, 3];   // sentido horario visto desde mi lugar: arriba-izq., arriba-der., abajo-izq., abajo-der.
+    for (i = 0; i < 3; i++) {
+      var col = document.createElement('div');
+      col.className = 'baza baza4' + (i === view.active && !g.handOver ? ' active' : '');
+      var quad = document.createElement('div'), mark = document.createElement('div');
+      quad.className = 'quad'; mark.className = 'mark';
+      var row = view.table[i], res = view.marks[i], best = 0;
+      [0, 1, 2, 3].forEach(function (s) { if (row[s]) best = Math.max(best, T.power(row[s])); });
+      order.forEach(function (rel) {
+        var s = (me + rel) % 4, slot = document.createElement('div');
+        slot.className = 'slot';
+        if (row[s]) {
+          var ce = U.cardEl(row[s], false);
+          ce.classList.add(isMine(s) ? 'tm' : 'to');
+          if (res === 'A' || res === 'B') ce.classList.add(T.power(row[s]) === best && T4.teamOf(s) === res ? 'won' : 'lost');
+          slot.appendChild(ce);
+        }
+        quad.appendChild(slot);
+      });
+      if (res === 'tie') mark.textContent = 'Parda';
+      else if (res) { mark.textContent = res === myTeam() ? 'Ganamos' : 'Ganan ellos'; mark.className += ' win'; }
+      else mark.innerHTML = '&nbsp;';
+      col.appendChild(quad); col.appendChild(mark);
+      el.appendChild(col);
+    }
+  }
+
+  function renderMyHand(playable) {
+    var el = $('miMano4');
+    el.innerHTML = '';
+    view.myHand.forEach(function (c, i) {
+      var b = U.cardEl(c, true), ok = playable && playable.has(i);
+      b.disabled = !ok;
+      if (ok) b.addEventListener('click', function () { humanAct({ type: 'play', idx: i }); });
+      el.appendChild(b);
+    });
+  }
+
+  function renderChips() {
+    var parts = [], lvl = g.truco ? g.truco.level : 0;
+    var tn = ['Sin truco', 'Truco', 'Retruco', 'Vale cuatro'];
+    if (view.mano !== null) parts.push('<span class="chip">Mano: ' + esc(nameOf(view.mano).toLowerCase() === 'vos' ? 'vos' : nameOf(view.mano)) + '</span>');
+    parts.push('<span class="chip stake">' + tn[lvl] + ' · ' + T.POINTS[lvl] + (T.POINTS[lvl] === 1 ? ' pto' : ' ptos') + '</span>');
+    if (view.envidoNote) parts.push('<span class="chip stake">' + view.envidoNote + '</span>');
+    $('chips4').innerHTML = parts.join('');
+  }
+
+  function aviso(html) { $('aviso4').innerHTML = html || '&nbsp;'; }
+
+  function renderAll() {
+    renderScore(); renderSeats(); renderCentro(); renderMyHand(null); renderChips();
+    aviso('');
+  }
+
+  function voz(who, text) {
+    var key = isMine(who) ? 'M' : 'O', el = $('voz' + key + '4');
+    el.textContent = (who === me ? 'Vos' : nameOf(who)) + ': ' + text;
+    el.classList.add('show');
+    clearTimeout(vozTimers[key]);
+    vozTimers[key] = setTimeout(function () { el.classList.remove('show'); }, (DELAY.say - 80) * SPEED);
+  }
+
+  /* ---------- eventos ---------- */
+  function handle(e) {
+    var us = myTeam();
+    switch (e.type) {
+      case 'deal':
+        view = freshView(e.mano);
+        renderScore(); renderSeats(); renderCentro(); renderMyHand(null); renderChips();
+        aviso('Mano ' + g.handNo + ': arranca <strong>' + esc(nameOf(e.mano)) + '</strong>.');
+        $('acciones4').innerHTML = '';
+        break;
+      case 'say':
+        voz(e.who, e.text);
+        break;
+      case 'play':
+        view.table[e.baza][e.who] = e.card;
+        view.counts[e.who]--;
+        if (e.who === me) {
+          view.myHand = view.myHand.filter(function (c) { return !(c.num === e.card.num && c.suit === e.card.suit); });
+          renderMyHand(null);
+        }
+        renderSeats(); renderCentro();
+        break;
+      case 'bazaEnd':
+        view.marks[e.baza] = e.winner || 'tie';
+        view.active = e.baza + 1;
+        renderCentro();
+        break;
+      case 'envidoResult':
+        if (e.declined) {
+          var mineWin = e.winner === us;
+          view.envidoNote = 'Envido no querido · ' + (mineWin ? 'sumamos ' : 'suman ellos ') + e.stake;
+          aviso('No se quiso el envido (' + esc(nameOf(e.by)) + '): ' + (mineWin ? '<strong>sumamos ' : '<strong>suman ellos ') + e.stake + (e.stake === 1 ? ' punto' : ' puntos') + '</strong>.');
+        } else {
+          var mine = e[us], theirs = e[T4.otherTeam(us)];
+          view.envidoNote = 'Envido ' + mine + ' a ' + theirs;
+          aviso('<div class="envido-res"><div><b>' + mine + '</b><span>Nosotros</span></div><div><b>' + theirs + '</b><span>Ellos</span></div></div>' +
+            (e.winner === us ? 'Ganamos el envido: <strong>+' : 'Ganan ellos el envido: <strong>+') + e.stake + '</strong>' +
+            (mine === theirs ? ' (empate: gana el más cercano al mano)' : ''));
+        }
+        renderChips();
+        break;
+      case 'score':
+        renderScore();
+        break;
+      case 'handEnd':
+        view.handEnd = e;
+        break;
+      case 'gameOver':
+        view.gameOver = e.winner;
+        break;
+    }
+  }
+
+  function enqueue(evts) {
+    queue = queue.concat(evts);
+    if (running) return;
+    running = true; locked = true;
+    next();
+  }
+  function next() {
+    if (!queue.length) { running = false; afterQueue(); return; }
+    var e = queue.shift(), my = gen;
+    handle(e);
+    setTimeout(function () { if (my === gen) next(); }, (DELAY[e.type] || 300) * SPEED);
+  }
+
+  /* ---------- turnos y botones ---------- */
+  function afterQueue() {
+    if (!sess || !g || !view) return;
+    renderSeats(); renderChips(); renderCentro();
+    if (g.over) { showGameOver(); return; }
+    if (g.handOver) { showHandEnd(); return; }
+    var a = g.actor();
+    if (a === me) { locked = false; renderHumanTurn(); return; }
+    locked = true;
+    renderMyHand(null);
+    $('acciones4').innerHTML = '';
+    if (a === null) { aviso('Esperando…'); return; }
+    var pend = g.envido.pending || g.truco.pending;
+    aviso(pend ? 'Tiene que responder <strong>' + esc(nameOf(a)) + '</strong>…' :
+      (humanAt(a) ? 'Juega <strong>' + esc(nameOf(a)) + '</strong>…' : 'Piensa <strong>' + esc(nameOf(a)) + '</strong>…'));
+  }
+
+  function humanAct(a) {
+    if (locked || !sess) return;
+    locked = true;
+    $('acciones4').innerHTML = '';
+    renderMyHand(null);
+    if (guest) { g.act(me, a); aviso('Esperando…'); return; }
+    if (!ctl || !ctl.act(a)) { locked = false; afterQueue(); }
+  }
+
+  function nextHand() {
+    if (guest) { aviso('Esperando que se reparta…'); g.startHand(); return; }
+    if (ctl) ctl.next();
+  }
+  function rematch() {
+    if (guest) { aviso('Esperando la revancha…'); g.send({ type: 'rematch' }); return; }
+    if (ctl) ctl.rematch();
+  }
+
+  function btn(label, cls, action) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn ' + (cls || ''); b.textContent = label;
+    b.addEventListener('click', function () { humanAct(action); });
+    return b;
+  }
+  function group(label, buttons) {
+    var d = document.createElement('div');
+    d.className = 'grupo';
+    if (label) { var l = document.createElement('div'); l.className = 'grupo-label'; l.textContent = label; d.appendChild(l); }
+    buttons.forEach(function (b) { d.appendChild(b); });
+    return d;
+  }
+
+  function renderHumanTurn() {
+    var legal = g.legal(me), el = $('acciones4'), e = g.envido, t = g.truco;
+    var has = function (type) { return legal.some(function (a) { return a.type === type; }); };
+    el.innerHTML = '';
+    var prompt = document.createElement('div');
+    prompt.className = 'prompt';
+    renderMyHand(new Set(legal.filter(function (a) { return a.type === 'play'; }).map(function (a) { return a.idx; })));
+
+    if (e.pending) {
+      var callNames = e.chain.map(function (c) { return T.ENVIDO_NAMES[c]; }).join(' + ');
+      prompt.innerHTML = esc(nameOf(e.pending.by)) + ' cantó <strong>' + callNames + '</strong>. ¿Lo querés?';
+      el.appendChild(prompt);
+      el.appendChild(group('', [btn('Quiero', 'primary big', { type: 'quiero' }), btn('No quiero', 'big', { type: 'noquiero' })]));
+      var raises = ['envido', 'real', 'falta'].filter(has).map(function (r) { return btn(T.ENVIDO_NAMES[r], '', { type: r }); });
+      if (raises.length) el.appendChild(group('Subir la apuesta', raises));
+      aviso('Tu envido: <strong>' + T.envidoPoints(g.dealt[me]) + '</strong>. Tu compañero también puede tener.');
+    } else if (t.pending) {
+      prompt.innerHTML = esc(nameOf(t.pending.by)) + ' cantó <strong>' + T.TRUCO_NAMES[t.pending.level] + '</strong>. ¿Lo querés?';
+      el.appendChild(prompt);
+      el.appendChild(group('', [btn('Quiero', 'primary big', { type: 'quiero' }), btn('No quiero', 'big', { type: 'noquiero' })]));
+      var ups = [];
+      if (has('truco')) ups.push(btn('Quiero ' + T.TRUCO_NAMES[t.pending.level + 1].toLowerCase(), '', { type: 'truco' }));
+      ['envido', 'real', 'falta'].filter(has).forEach(function (r) { ups.push(btn(T.ENVIDO_NAMES[r] + ' primero', '', { type: r })); });
+      if (ups.length) el.appendChild(group('Subir', ups));
+      aviso('');
+    } else {
+      var cantos = ['envido', 'real', 'falta'].filter(has).map(function (r) { return btn(T.ENVIDO_NAMES[r], '', { type: r }); });
+      if (has('truco')) cantos.push(btn(T.TRUCO_NAMES[g.nextTrucoLevel()], 'primary', { type: 'truco' }));
+      prompt.innerHTML = 'Te toca. Tirá una carta' + (cantos.length ? ' o cantá.' : '.');
+      el.appendChild(prompt);
+      if (cantos.length) el.appendChild(group('Cantar', cantos));
+      el.appendChild(group('', [btn('Irme al mazo', 'danger', { type: 'mazo' })]));
+      if (g.baza === 0 && !view.envidoNote && !g.envido.done) aviso('Tu envido: <strong>' + T.envidoPoints(g.dealt[me]) + '</strong>.');
+      else aviso('');
+    }
+  }
+
+  function showHandEnd() {
+    var h = view.handEnd, el = $('acciones4');
+    locked = true;
+    renderMyHand(null);
+    el.innerHTML = '';
+    var p = document.createElement('div');
+    p.className = 'panel';
+    var title = 'Mano terminada', text = '';
+    if (h) {
+      var won = h.winner === myTeam(), how;
+      title = won ? 'Ganamos la mano' : 'Perdimos la mano';
+      if (h.reason === 'cartas') how = 'por las cartas';
+      else if (h.reason === 'mazo') how = h.by === me ? 'te fuiste al mazo' : nameOf(h.by) + ' se fue al mazo';
+      else how = h.by === me ? 'no quisiste' : nameOf(h.by) + ' no quiso';
+      text = (won ? 'Sumamos ' : 'Suman ellos ') + h.pts + (h.pts === 1 ? ' punto' : ' puntos') + ' (' + how + ').';
+    }
+    p.innerHTML = '<h2>' + title + '</h2><p>' + esc(text) + '</p>';
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn primary big'; b.textContent = 'Repartir la próxima mano';
+    b.addEventListener('click', function () { b.disabled = true; nextHand(); });
+    p.appendChild(b);
+    el.appendChild(p);
+    aviso('Van ' + g.scores[myTeam()] + ' a ' + g.scores[theirTeam()] + '.');
+    setTimeout(function () { b.focus({ preventScroll: true }); }, 50);
+  }
+
+  function showGameOver() {
+    var el = $('acciones4'), won = g.scores[myTeam()] >= g.target;
+    locked = true;
+    renderMyHand(null);
+    el.innerHTML = '';
+    var p = document.createElement('div');
+    p.className = 'panel';
+    p.innerHTML = '<h2>' + (won ? '¡Ganamos la partida!' : 'Ganaron ellos') + '</h2><p>Final: ' + g.scores[myTeam()] + ' a ' + g.scores[theirTeam()] + ' (a ' + g.target + ').</p>';
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn primary big'; b.textContent = 'Jugar otra partida';
+    b.addEventListener('click', function () { b.disabled = true; rematch(); });
+    p.appendChild(b);
+    el.appendChild(p);
+    aviso('');
+  }
+
+  /* ---------- panel de la sala ---------- */
+  function showTable() {
+    $('score4').hidden = false; $('mesa4').hidden = false; $('acciones4').hidden = false;
+  }
+  function hideTable() {
+    $('score4').hidden = true; $('mesa4').hidden = true; $('acciones4').hidden = true;
+    $('acciones4').innerHTML = '';
+  }
+
+  function seatItem(i) {
+    var s = info && info[i] ? info[i] : { n: i === 0 ? 'Anfitrión' : (N4.BOT_NAMES[i] || 'Compu'), k: i === 0 ? 'host' : 'empty', c: i === 0 };
+    var tag = s.k === 'host' ? 'anfitrión' : (s.k === 'guest' ? (s.c ? 'conectado' : 'desconectado') : 'compu');
+    var cls = s.k === 'empty' ? 'bot' : (s.c ? 'on' : 'off');
+    return '<li><span>' + esc(s.n) + (i === me ? ' (vos)' : '') + '</span><em class="st ' + cls + '">' + tag + '</em></li>';
+  }
+  function teamsHTML() {
+    return '<div class="teams"><div class="team"><h4>Equipo 1</h4><ul>' + seatItem(0) + seatItem(2) + '</ul></div>' +
+      '<div class="team"><h4>Equipo 2</h4><ul>' + seatItem(1) + seatItem(3) + '</ul></div></div>';
+  }
+
+  function copyCode() {
+    var btnEl = $('copyCode'), box = $('codeBox');
+    var fallback = function () { var s = window.getSelection(); s.removeAllRanges(); var rg = document.createRange(); rg.selectNodeContents(box); s.addRange(rg); btnEl.textContent = 'Copialo'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(roomCode.toUpperCase()).then(function () { btnEl.textContent = 'Copiado'; }, fallback);
+    } else fallback();
+  }
+
+  function renderLobby() {
+    if (!sess) return;
+    var body = $('lobbyBody'), kind = sess.o.kind, code = esc(roomCode.toUpperCase()), h = '';
+    $('lobby').hidden = false;
+    if (kind === 'solo') {
+      h = '<p class="lobby-msg" role="status">Partida 2 contra 2 contra la compu: vos y Coco contra Beto y Nacho.</p>' +
+        '<div class="lobby-row"><button type="button" class="btn danger" id="leave4">Salir</button></div>';
+    } else if (kind === 'create') {
+      if (!roomCode) {
+        h = '<p class="lobby-msg" role="status">Creando la sala…</p>';
+      } else if (!started) {
+        h = '<div class="lobby-row"><span>Código de tu sala 2 contra 2</span><output class="code" id="codeBox" tabindex="0">' + code + '</output>' +
+          '<button type="button" class="btn" id="copyCode">Copiar</button></div>' + teamsHTML() +
+          '<p class="lobby-msg" role="status">Pasale el código a tus amigos (el primero que entra es tu compañero). Los lugares libres los juega la compu.</p>' +
+          '<div class="lobby-row"><button type="button" class="btn primary" id="go4">Empezar partida a ' + target + '</button>' +
+          '<button type="button" class="btn danger" id="leave4">Cerrar sala</button></div>';
+      } else {
+        h = '<div class="lobby-row"><span>Sala</span><output class="code small" id="codeBox">' + code + '</output>' +
+          '<button type="button" class="btn" id="copyCode">Copiar</button>' +
+          '<button type="button" class="btn danger" id="leave4">Cerrar sala</button></div>' + teamsHTML() +
+          '<p class="hint">Si alguien se cae, juega la compu hasta que vuelva con el mismo código. Los lugares libres se pueden ocupar en cualquier momento.</p>';
+      }
+    } else {
+      if (!info) {
+        h = '<div class="lobby-row"><span>Sala</span><output class="code small" id="codeBox">' + code + '</output>' +
+          '<span class="lobby-msg" role="status">Conectando con la sala…</span><button type="button" class="btn danger" id="leave4">Salir</button></div>';
+      } else {
+        h = '<div class="lobby-row"><span>Sala</span><output class="code small" id="codeBox">' + code + '</output>' +
+          '<span class="lobby-msg" role="status">' + (started ? 'Partida en marcha.' : 'Esperando que el anfitrión empiece…') + '</span>' +
+          '<button type="button" class="btn danger" id="leave4">Salir de la sala</button></div>' + teamsHTML();
+      }
+    }
+    body.innerHTML = h;
+    var b;
+    if ((b = $('leave4'))) b.addEventListener('click', function () { exit(''); });
+    if ((b = $('copyCode'))) b.addEventListener('click', copyCode);
+    if ((b = $('go4'))) b.addEventListener('click', function () { if (ctl) ctl.start(); });
+  }
+
+  /* ---------- sesiones ---------- */
+  function resetState() {
+    queue = []; gen++; running = false; locked = true; view = null; g = null; info = null; started = false; me = 0;
+  }
+
+  function exit(msg, code) {
+    if (!sess) return;
+    var c = ctl, j = guest, o = sess.o;
+    ctl = null; guest = null; sess = null;
+    try { if (c) c.close(); } catch (err) { /* nada */ }
+    try { if (j) j.close(); } catch (err) { /* nada */ }
+    resetState();
+    hideTable();
+    o.onExit(msg || '', code);
+  }
+
+  function hostFlow(tries) {
+    var o = sess.o, solo = o.kind === 'solo', code = '', c = null;
+    if (!solo && !N4.available()) { exit(U.noLibMsg()); return; }
+    if (!solo) code = window.TrucoNet.randomCode();
+    renderLobby();
+    try {
+      c = new H4.HostCtl({
+        code: code, target: target, hostName: o.name, offline: solo, speed: SPEED,
+        busy: function () { return running || queue.length > 0; },
+        onEvents: function (evts, game) {
+          if (ctl !== c) return;
+          g = game; me = 0;
+          if (!started) { started = true; view = emptyView(); showTable(); renderLobby(); }
+          enqueue(evts);
+        },
+        onReady: function () {
+          if (ctl !== c) return;
+          roomCode = code; info = c.info();
+          if (solo) c.start(); else renderLobby();
+        },
+        onError: function (type, wasReady) {
+          if (ctl !== c) return;
+          if (wasReady) {
+            if (!started) $('conn').textContent = 'El servicio de salas anda intermitente. Si tus amigos no pueden entrar, cerrá la sala y creá otra.';
+            return;
+          }
+          if (type === 'unavailable-id' && tries < 4) {
+            var old = ctl; ctl = null;
+            try { old.close(); } catch (err) { /* nada */ }
+            hostFlow(tries + 1);
+            return;
+          }
+          exit('No pude crear la sala. ' + U.errMsg(type));
+        },
+        onLobby: function (inf, st) {
+          if (ctl !== c) return;
+          info = inf;
+          renderLobby();
+          if (started) renderSeats();
+          else if (inf.every(function (s) { return s.c; })) c.start();
+        },
+        onRoster: function () {
+          if (ctl !== c) return;
+          info = c.info();
+          renderLobby(); renderSeats();
+        }
+      });
+    } catch (err) {
+      exit('No pude crear la sala. ' + U.errMsg('browser-incompatible'));
+      return;
+    }
+    ctl = c;
+  }
+
+  function joinFlow() {
+    var o = sess.o, code = o.code, j = null;
+    if (!N4.available()) { exit(U.noLibMsg(), code); return; }
+    roomCode = code;
+    g = new N4.RemoteGame4(); view = emptyView();
+    renderLobby();
+    try {
+      j = new N4.joinRoom4(code, {
+        gid: o.gid, name: o.name,
+        onWelcome: function (w) {
+          if (guest !== j) return;
+          me = w.seat; g.mySeat = w.seat; target = w.tg; started = !!w.st;
+          renderLobby();
+        },
+        onLobby: function (l) {
+          if (guest !== j) return;
+          info = l.seats; target = l.tg;
+          renderLobby();
+          if (started) renderSeats();
+        },
+        onMessage: function (m, prev) {
+          if (guest !== j) return;
+          if (!started) { started = true; }
+          if (!$('mesa4').hidden === false) { showTable(); renderLobby(); }
+          g.applySnapshot(m.s);
+          me = g.mySeat;
+          if (prev !== null && m.k === prev + 1 && view.mano !== null) { enqueue(m.e); return; }
+          queue = []; gen++; running = false;
+          resyncView();
+          afterQueue();
+        },
+        onHostLeft: function (bye) {
+          if (guest !== j) return;
+          exit(bye ? 'El anfitrión cerró la sala.' : 'Se cortó la conexión con el anfitrión (cerró la sala o se cayó la conexión).');
+        },
+        onFull: function () { if (guest === j) exit('La sala está llena: ya hay cuatro personas.', code); },
+        onError: function (type) { if (guest === j) exit(U.errMsg(type), code); }
+      });
+    } catch (err) {
+      exit(U.errMsg('browser-incompatible'), code);
+      return;
+    }
+    guest = j;
+    g.send = function (a) { if (guest === j) j.send(a); };
+  }
+
+  function startSession(o) {
+    if (sess) return;
+    resetState();
+    sess = { o: o };
+    target = o.target || 30;
+    roomCode = o.code || '';
+    $('chips4').innerHTML = ''; $('seats4').innerHTML = ''; $('centro4').innerHTML = ''; $('miMano4').innerHTML = '';
+    aviso('');
+    if (o.kind === 'join') joinFlow(); else hostFlow(0);
+  }
+
+  window.Truco4UI = { start: startSession, active: function () { return !!sess; } };
+})();
 
 </script>
 
