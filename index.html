@@ -246,31 +246,47 @@ button.card:disabled { cursor: default; }
 .st { font-style: normal; font-size: 0.72rem; border-radius: 99px; padding: 0 8px; border: 1px solid var(--chalk-dim); color: var(--chalk-dim); white-space: nowrap; align-self: center; }
 .st.on { border-color: var(--gold); color: var(--gold); }
 .st.off { border-color: var(--red); color: #f0a79f; }
-.mesa4 { --tw: 54px; --th: 82px; }
-.seats4 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.seat4 { border: 1px solid rgba(232,240,228,0.2); border-radius: 10px; padding: 6px 8px; background: rgba(0,0,0,0.12); min-width: 0; display: flex; flex-direction: column; gap: 3px; align-items: center; text-align: center; }
+.mesa4 { --tw: 58px; --th: 88px; }
+.cross4 { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-areas: ". t ." "l c r" ". b ."; gap: 6px 4px; justify-items: center; align-items: center; padding-block: 4px; }
+.pos { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; width: 100%; }
+.pos.t { grid-area: t; } .pos.l { grid-area: l; } .pos.r { grid-area: r; } .pos.b { grid-area: b; } .pos.c { grid-area: c; justify-content: center; text-align: center; }
+.bz-n { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--chalk-dim); }
+.pos.c .mark { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--chalk-dim); }
+.pos.c .mark.win { color: var(--gold); font-weight: 700; }
+.seat4 { border: 1px solid rgba(232,240,228,0.2); border-radius: 10px; padding: 4px 8px; background: rgba(0,0,0,0.12); min-width: 0; max-width: 100%; display: flex; flex-direction: column; gap: 2px; align-items: center; text-align: center; }
 .seat4.mate { border-color: rgba(227,168,43,0.55); }
 .seat4.turn { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
-.seat-name { font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.seat-role { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--chalk-dim); }
-.seat-backs { display: flex; gap: 4px; min-height: 36px; }
-.seat-backs .card.back { width: 24px; height: 36px; border-width: 2px; border-radius: 4px; }
+.seat-name { font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem; }
+.seat-role { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--chalk-dim); }
+.seat-backs { display: flex; gap: 3px; min-height: 30px; }
+.seat-backs .card.back { width: 20px; height: 30px; border-width: 2px; border-radius: 4px; }
 .seat-backs .card.back::after { inset: 3px; }
-.centro4 { gap: 8px; }
-.baza4 { padding: 6px 3px; }
-.quad { display: grid; grid-template-columns: repeat(2, var(--tw)); gap: 4px; justify-content: center; }
-.baza4 .slot { width: var(--tw); height: var(--th); }
-.baza4 .slot .card { width: var(--tw); height: var(--th); }
-.baza4 .card.tm { outline: 2px solid rgba(227,168,43,0.8); outline-offset: -1px; }
-.baza4 .card.to { outline: 2px solid rgba(169,196,179,0.55); outline-offset: -1px; }
+.mesa4 .slot { width: var(--tw); height: var(--th); border-radius: 8px; background: rgba(0,0,0,0.14); display: grid; place-items: center; }
+.mesa4 .slot .card { width: var(--tw); height: var(--th); }
+.mesa4 .slot .card.won { box-shadow: 0 0 0 3px var(--gold), 0 4px 10px rgba(0,0,0,0.4); }
+.mesa4 .slot .card.lost { filter: brightness(0.7); }
+.hist4 { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.hist4:empty { display: none; }
+.hb { display: flex; align-items: center; gap: 4px; border: 1px dashed rgba(232,240,228,0.25); border-radius: 8px; padding: 3px 6px; }
+.hb.w { border-color: rgba(227,168,43,0.6); }
+.hl { font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--chalk-dim); margin-right: 2px; }
+.card.mini { width: 26px; height: 40px; border-radius: 4px; box-shadow: none; }
+.card.tm { outline: 2px solid rgba(227,168,43,0.8); outline-offset: -1px; }
+.card.to { outline: 2px solid rgba(169,196,179,0.55); outline-offset: -1px; }
 @media (max-width: 520px) {
-  .mesa4 { --tw: 42px; --th: 64px; }
-  .seat-backs .card.back { width: 20px; height: 30px; }
+  .mesa4 { --tw: 46px; --th: 70px; }
+  .seat-backs .card.back { width: 16px; height: 24px; }
+  .seat-backs { min-height: 24px; }
+  .seat-role { font-size: 0.55rem; }
+  .seat-name { font-size: 0.8rem; }
   .team li { font-size: 0.82rem; }
   .teams { gap: 6px; }
 }
-
 #codigo { width: 9.5ch; }
+.mesa4 .zone-label { flex-wrap: wrap; }
+.mesa4 .chip { white-space: nowrap; flex: none; }
+.seat-name { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2; }
+.seat-name .chip { font-size: 0.62rem; padding: 0 6px; }
 
 
 </style>
@@ -402,12 +418,12 @@ button.card:disabled { cursor: default; }
 
   <main class="mesa mesa4" id="mesa4" hidden>
     <div class="zone-label">2 contra 2 <span id="chips4" style="display:contents"></span></div>
-    <div class="seats4" id="seats4"></div>
     <div class="centro-wrap">
       <div class="voz cpu" id="vozO4" role="status"></div>
-      <div class="centro centro4" id="centro4"></div>
+      <div class="cross4" id="centro4"></div>
       <div class="voz me" id="vozM4" role="status"></div>
     </div>
+    <div class="hist4" id="hist4"></div>
     <div class="aviso" id="aviso4" aria-live="polite">&nbsp;</div>
     <div class="zone-label">Tus cartas</div>
     <div class="mi-mano" id="miMano4"></div>
@@ -2595,50 +2611,63 @@ button.card:disabled { cursor: default; }
     });
   }
 
-  function renderSeats() {
-    var el = $('seats4'), actor = running || !g || g.handOver || g.over ? null : g.actor();
-    el.innerHTML = '';
-    [1, 2, 3].forEach(function (rel) {
-      var s = (me + rel) % 4, d = document.createElement('div'), mate = isMine(s), i;
-      d.className = 'seat4 ' + (mate ? 'mate' : 'rival') + (actor === s ? ' turn' : '');
-      var role = (mate ? 'Compañero' : 'Rival') + (humanAt(s) ? '' : ' · compu');
-      var backs = '';
-      for (i = 0; i < (view ? view.counts[s] : 0); i++) backs += '<span class="card back"></span>';
-      d.innerHTML = '<div class="seat-name">' + esc(nameOf(s)) + (view && view.mano === s ? ' <span class="chip">Mano</span>' : '') + '</div>' +
-        '<div class="seat-role">' + role + '</div><div class="seat-backs">' + backs + '</div>';
-      el.appendChild(d);
-    });
+  /* Mesa en cruz: compañero enfrente, un rival a cada lado y vos abajo; las cartas se juegan en el centro. */
+  function shownBaza() {
+    var i, k = 0;
+    for (i = 0; i < 3; i++) if (Object.keys(view.table[i]).length) k = i;
+    return k;
   }
 
-  function renderCentro() {
-    var el = $('centro4'), i;
-    el.innerHTML = '';
-    var order = [1, 2, 0, 3];   // sentido horario visto desde mi lugar: arriba-izq., arriba-der., abajo-izq., abajo-der.
-    for (i = 0; i < 3; i++) {
-      var col = document.createElement('div');
-      col.className = 'baza baza4' + (i === view.active && !g.handOver ? ' active' : '');
-      var quad = document.createElement('div'), mark = document.createElement('div');
-      quad.className = 'quad'; mark.className = 'mark';
-      var row = view.table[i], res = view.marks[i], best = 0;
-      [0, 1, 2, 3].forEach(function (s) { if (row[s]) best = Math.max(best, T.power(row[s])); });
-      order.forEach(function (rel) {
-        var s = (me + rel) % 4, slot = document.createElement('div');
-        slot.className = 'slot';
-        if (row[s]) {
-          var ce = U.cardEl(row[s], false);
-          ce.classList.add(isMine(s) ? 'tm' : 'to');
-          if (res === 'A' || res === 'B') ce.classList.add(T.power(row[s]) === best && T4.teamOf(s) === res ? 'won' : 'lost');
-          slot.appendChild(ce);
-        }
-        quad.appendChild(slot);
+  function renderCross() {
+    var el = $('centro4'), hist = $('hist4');
+    if (!view) return;
+    el.innerHTML = ''; hist.innerHTML = '';
+    var actor = running || !g || g.handOver || g.over ? null : g.actor();
+    var bi = shownBaza(), row = view.table[bi], res = view.marks[bi], best = 0, us = myTeam();
+    [0, 1, 2, 3].forEach(function (s) { if (row[s]) best = Math.max(best, T.power(row[s])); });
+    [['t', 2], ['l', 1], ['r', 3], ['b', 0]].forEach(function (p) {
+      var s = (me + p[1]) % 4, d = document.createElement('div'), mate = isMine(s), i;
+      d.className = 'pos ' + p[0];
+      var box = document.createElement('div');
+      box.className = 'seat4 ' + (mate ? 'mate' : 'rival') + (actor === s ? ' turn' : '') + (s === me ? ' me' : '');
+      var backs = '';
+      if (s !== me) for (i = 0; i < view.counts[s]; i++) backs += '<span class="card back"></span>';
+      box.innerHTML = '<div class="seat-name">' + esc(nameOf(s)) + (view.mano === s ? ' <span class="chip">Mano</span>' : '') + '</div>' +
+        (s === me ? '' : '<div class="seat-role">' + (mate ? 'Compañero' : 'Rival') + (humanAt(s) ? '' : ' · compu') + '</div><div class="seat-backs">' + backs + '</div>');
+      var slot = document.createElement('div');
+      slot.className = 'slot';
+      if (row[s]) {
+        var ce = U.cardEl(row[s], false);
+        ce.classList.add(mate ? 'tm' : 'to');
+        if (res === 'A' || res === 'B') ce.classList.add(T.power(row[s]) === best && T4.teamOf(s) === res ? 'won' : 'lost');
+        slot.appendChild(ce);
+      }
+      if (p[0] === 'b') { d.appendChild(slot); d.appendChild(box); } else { d.appendChild(box); d.appendChild(slot); }
+      el.appendChild(d);
+    });
+    var c = document.createElement('div');
+    c.className = 'pos c';
+    var mk = res === 'tie' ? 'Parda' : (res ? (res === us ? 'Ganamos' : 'Ganan ellos') : '');
+    c.innerHTML = '<div class="bz-n">' + (bi + 1) + 'ª baza</div><div class="mark' + (res && res !== 'tie' ? ' win' : '') + '">' + (mk || '&nbsp;') + '</div>';
+    el.appendChild(c);
+    // bazas anteriores, chiquitas
+    var i2;
+    for (i2 = 0; i2 < bi; i2++) {
+      var h = document.createElement('div'), r2 = view.table[i2], m2 = view.marks[i2];
+      h.className = 'hb' + (m2 && m2 !== 'tie' ? (m2 === us ? ' w' : ' l') : '');
+      var lab = document.createElement('span');
+      lab.className = 'hl';
+      lab.textContent = (i2 + 1) + 'ª · ' + (m2 === 'tie' ? 'Parda' : (m2 === us ? 'Ganamos' : (m2 ? 'Ganan ellos' : '')));
+      h.appendChild(lab);
+      [1, 2, 3, 0].forEach(function (rel) {
+        var s = (me + rel) % 4;
+        if (r2[s]) { var mc = U.cardEl(r2[s], false); mc.classList.add('mini', isMine(s) ? 'tm' : 'to'); h.appendChild(mc); }
       });
-      if (res === 'tie') mark.textContent = 'Parda';
-      else if (res) { mark.textContent = res === myTeam() ? 'Ganamos' : 'Ganan ellos'; mark.className += ' win'; }
-      else mark.innerHTML = '&nbsp;';
-      col.appendChild(quad); col.appendChild(mark);
-      el.appendChild(col);
+      hist.appendChild(h);
     }
   }
+  function renderSeats() { renderCross(); }
+  function renderCentro() { renderCross(); }
 
   function renderMyHand(playable) {
     var el = $('miMano4');
@@ -3058,7 +3087,7 @@ button.card:disabled { cursor: default; }
     sess = { o: o };
     target = o.target || 30;
     roomCode = o.code || '';
-    $('chips4').innerHTML = ''; $('seats4').innerHTML = ''; $('centro4').innerHTML = ''; $('miMano4').innerHTML = '';
+    $('chips4').innerHTML = ''; $('hist4').innerHTML = ''; $('centro4').innerHTML = ''; $('miMano4').innerHTML = '';
     aviso('');
     if (o.kind === 'join') joinFlow(); else hostFlow(0);
   }
